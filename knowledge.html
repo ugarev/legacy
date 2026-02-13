@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UGA Knows</title>
+    <link rel="icon" type="image/x-icon" href="icon.png">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
+
+        :root {
+            /* THEME PRESERVED */
+            --primary-color: #4A90E2;
+            --primary-light: #eaf4ff;
+            --secondary-color: #50E3C2;
+            --correct-color: #28a745;
+            --incorrect-color: #dc3545;
+            --warning-color: #db7B2b;
+            --bg-color: #f4f7f9;
+            --text-color: #333;
+            --white: #FFFFFF;
+            --grey-text: #777;
+            --border-color: #eee;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        /* --- LAYOUT CONTAINER --- */
+        #app-container {
+            width: 100%;
+            max-width: 1100px;
+            background-color: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 30px 40px;
+            box-sizing: border-box;
+            margin-top: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin: 0 0 10px 0;
+            font-size: 2.5rem;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: var(--grey-text);
+            margin-bottom: 30px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* --- PREMIUM ANIMATION --- */
+        #premium-text {
+            display: none;
+            font-weight: 700;
+            background-image: linear-gradient(
+                90deg, 
+                #ff0000, 
+                #ff7f00, 
+                #ffff00, 
+                #00ff00, 
+                #0000ff, 
+                #4b0082, 
+                #ee82ee
+            );
+            background-size: 200% auto;
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            animation: rainbow-flow 3s linear infinite;
+        }
+
+        @keyframes rainbow-flow {
+            to { background-position: 200% center; }
+        }
+
+        body.premium-active #premium-text { display: inline; }
+        
+        /* --- SEARCH SECTION --- */
+        #search-section {
+            width: 100%;
+            margin-bottom: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        #search-container {
+            display: flex;
+            width: 100%;
+            position: relative;
+        }
+        
+        #search-input {
+            flex-grow: 1;
+            min-width: 0;
+            padding: 16px 20px;
+            font-size: 1.1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 8px 0 0 8px;
+            font-family: 'Noto Sans TC', sans-serif;
+            outline: none;
+            transition: border-color 0.2s;
+            background: #fafafa;
+        }
+        #search-input:focus {
+            border-color: var(--primary-color);
+            background: #fff;
+        }
+        
+        #search-button {
+            padding: 0 30px;
+            flex-shrink: 0;
+            border: none;
+            background-color: var(--primary-color);
+            color: var(--white);
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 0 8px 8px 0;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        #search-button:hover {
+            background-color: #357ABD;
+        }
+
+        body.premium-active #search-button {
+            background-image: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #ee82ee);
+            background-size: 200% auto;
+            animation: rainbow-flow 3s linear infinite;
+            border: none;
+        }
+        body.premium-active #search-button:hover { opacity: 0.8; }
+
+        /* --- SEARCH MODE TOGGLES --- */
+        .search-options {
+            display: flex;
+            gap: 10px;
+            justify-content: center; 
+        }
+
+        .search-option {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: var(--grey-text);
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+            background-color: #f9f9f9;
+        }
+
+        .search-option:hover {
+            background-color: #eee;
+        }
+
+        .search-option input[type="radio"] {
+            margin-right: 8px;
+            accent-color: var(--primary-color);
+        }
+
+        .search-option:has(input:checked) {
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+            border-color: #d0e4fa;
+            font-weight: 700;
+        }
+        
+        /* --- GRID LAYOUT FOR CONTENT --- */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr; 
+            gap: 40px;
+            align-items: start;
+            transition: all 0.3s ease;
+        }
+        
+        /* Single Column Mode (when Wiki is active) */
+        .content-grid.single-column {
+            grid-template-columns: 1fr;
+        }
+
+        /* Helper to hide elements */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Results Area */
+        #results-container {
+            width: 100%;
+            text-align: left;
+            min-height: 200px; 
+        }
+
+        /* SIDEBAR: Word/Article of the Day */
+        #sidebar-container {
+            background-color: #fbfbfb;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 0; /* Padding moved to inner content */
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            position: sticky;
+            top: 20px;
+            transition: opacity 0.3s ease;
+            overflow: hidden;
+        }
+
+        /* Sidebar Tabs */
+        .sidebar-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            background: #f4f7f9;
+        }
+
+        .sidebar-tab {
+            flex: 1;
+            text-align: center;
+            padding: 12px 0;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--grey-text);
+            transition: all 0.2s;
+        }
+
+        .sidebar-tab:hover {
+            background-color: #eaeef1;
+        }
+
+        .sidebar-tab.active {
+            background-color: #fbfbfb;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+        #sidebar-content {
+            padding: 25px;
+        }
+        
+        /* --- TYPOGRAPHY & RESULTS --- */
+        h2 {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-top: 0;
+            font-size: 1.5rem;
+        }
+
+        .result-word {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 5px;
+            line-height: 1.1;
+        }
+        
+        .result-phonetic {
+            font-size: 1.2rem;
+            color: var(--grey-text);
+            margin-bottom: 25px;
+            font-family: monospace;
+        }
+        
+        .part-of-speech {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--white);
+            background-color: var(--secondary-color);
+            padding: 4px 12px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .definition-list {
+            list-style: decimal;
+            padding-left: 20px;
+            margin: 0;
+        }
+        
+        .definition-item {
+            font-size: 1.05rem;
+            margin-bottom: 18px;
+            line-height: 1.6;
+            color: #444;
+        }
+        
+        .definition-example {
+            color: var(--grey-text);
+            font-style: italic;
+            margin-top: 6px;
+            border-left: 3px solid var(--primary-color);
+            padding-left: 12px;
+            font-size: 0.95rem;
+        }
+
+        /* --- ARTICLE OF THE DAY SPECIFIC --- */
+        .aotd-image {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            background-color: #ddd;
+        }
+        .aotd-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 10px;
+            line-height: 1.3;
+        }
+        .aotd-extract {
+            font-size: 0.95rem;
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        .aotd-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            width: 100%;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        .aotd-button:hover {
+            background-color: #357ABD;
+        }
+
+        /* --- WIKIPEDIA SPECIFIC STYLES --- */
+        .wiki-badge {
+            background-color: #333;
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            vertical-align: middle;
+            margin-left: 10px;
+            font-weight: normal;
+            display: inline-block;
+            transform: translateY(-6px);
+        }
+
+        .wiki-content-root {
+            font-size: 1.05rem;
+            line-height: 1.7;
+            color: #333;
+            margin-top: 20px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        /* BEAUTIFIED SECTION HEADERS */
+        .wiki-section-header {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #333;
+            background-color: #f0f4f8;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            margin-bottom: 5px;
+            cursor: pointer; 
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+            border: 1px solid #e1e8ed;
+            transition: background-color 0.2s ease;
+        }
+
+        .wiki-section-header:hover {
+            background-color: #e2e8f0;
+        }
+
+        .wiki-section-header::after {
+            content: '⮟';
+            font-size: 1.2rem;
+            color: var(--primary-color);
+            transition: transform 0.3s ease;
+        }
+
+        .wiki-section-header.active::after {
+            content: '⮝';
+        }
+        
+        .wiki-section-content {
+            padding: 10px 5px;
+        }
+
+        /* INFOBOX STYLING */
+        table.infobox {
+            border: 1px solid #a2a9b1;
+            border-spacing: 3px;
+            background-color: #f8f9fa;
+            color: black;
+            margin: 0.5em 0 0.5em 1em;
+            padding: 0.2em;
+            float: right;
+            clear: right;
+            font-size: 88%;
+            line-height: 1.5em;
+            width: 22em;
+            max-width: 100%;
+        }
+        
+        table.infobox th, table.infobox td {
+            vertical-align: top;
+            text-align: left;
+            padding: 0.2em 0.4em;
+        }
+        
+        table.infobox th {
+            text-align: left; 
+            background-color: #eaecf0;
+        }
+        
+        table.infobox img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* General Wiki Elements */
+        .wiki-content-root h3 {
+            font-size: 1.2rem;
+            color: #555;
+            margin-top: 25px;
+            margin-bottom: 10px;
+            font-weight: 700;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .wiki-content-root ul, .wiki-content-root ol {
+            padding-left: 25px;
+            margin-bottom: 20px;
+        }
+        
+        .wiki-content-root li {
+            margin-bottom: 5px;
+        }
+
+        .mw-editsection, .reference, .reflist, .mbox-small, .ambox, .hatnote {
+            display: none !important;
+        }
+        
+        .thumb {
+            border: 1px solid #c8ccd1;
+            background-color: #f8f9fa;
+            font-size: 94%;
+            margin-bottom: 0.5em;
+            width: auto;
+            overflow: hidden;
+        }
+        .tright {
+            float: right;
+            clear: right;
+            margin: 0.5em 0 1.3em 1.4em;
+        }
+        .tleft {
+            float: left;
+            clear: left;
+            margin: 0.5em 1.4em 1.3em 0;
+        }
+        .thumbcaption {
+            padding: 3px;
+            font-size: 0.85rem;
+            color: #666;
+            text-align: center;
+        }
+
+        .error-message {
+            font-size: 1.2rem;
+            color: var(--incorrect-color);
+            text-align: center;
+            font-weight: 700;
+            margin-top: 40px;
+        }
+        
+        /* --- LOADERS --- */
+        .loader {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #eee;
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 30px auto;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* --- MOBILE RESPONSIVENESS --- */
+        @media (max-width: 850px) {
+            body { padding: 10px; }
+            #app-container { padding: 20px; border-radius: 8px; }
+            h1 { font-size: 2rem; }
+            
+            .content-grid { grid-template-columns: 1fr !important; gap: 30px; }
+            
+            #sidebar-container { position: static; order: 2; }
+            #search-input { font-size: 1rem; }
+            #search-button { padding: 0 20px; }
+            .search-options { flex-wrap: wrap; }
+
+            table.infobox {
+                float: none;
+                width: 100%;
+                margin: 1em 0;
+            }
+            .tright, .tleft {
+                float: none;
+                margin: 1em auto;
+                display: table;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <h1>UGA Knows <span id="premium-text">🅿🆁🅴🅼🅸🆄🅼</span></h1>
+        <div class="subtitle">The Ultimate Knowledge Base</div>
+        
+        <div id="search-section">
+            <div id="search-container">
+                <input type="text" id="search-input" placeholder="Search for anything..." aria-label="Search word">
+                <button id="search-button">Search</button>
+            </div>
+            
+            <!-- Search Source Selector -->
+            <div class="search-options">
+                <label class="search-option">
+                    <input type="radio" name="searchSource" value="auto" checked> 
+                    Auto
+                </label>
+                <label class="search-option">
+                    <input type="radio" name="searchSource" value="dictionary"> 
+                    Dictionary
+                </label>
+                <label class="search-option">
+                    <input type="radio" name="searchSource" value="wikipedia"> 
+                    Wiki
+                </label>
+            </div>
+        </div>
+        
+        <div class="content-grid">
+            <!-- Main Content: Search Results -->
+            <div id="results-container">
+                <div style="text-align: center; color: var(--grey-text); margin-top: 40px;">
+                    Type a term above to search the knowledge base.
+                </div>
+            </div>
+            
+            <!-- Sidebar: Tabs for Word/Article -->
+            <div id="sidebar-container">
+                <div class="sidebar-tabs">
+                    <div class="sidebar-tab active" id="tab-word" onclick="switchSidebarTab('word')">Word</div>
+                    <div class="sidebar-tab" id="tab-article" onclick="switchSidebarTab('article')">Article</div>
+                </div>
+                <div id="sidebar-content">
+                    <div class="loader"></div> 
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript" src="thing/know.js"></script>
+
+</body>
+</html>

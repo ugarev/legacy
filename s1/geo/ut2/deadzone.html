@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dead Zone: High Fidelity Simulation</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+        #canvas-container { width: 100vw; height: 100vh; display: block; }
+        
+        /* UI Layer */
+        #ui-layer {
+            position: absolute;
+            bottom: 40px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        #subtitle-box {
+            background: rgba(15, 23, 42, 0.85); /* Dark slate blue */
+            color: #f1f5f9;
+            padding: 20px 40px;
+            border-radius: 12px;
+            font-size: 1.4rem;
+            line-height: 1.5;
+            max-width: 800px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+            transition: opacity 0.5s;
+        }
+
+        #start-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, #1e293b, #0f172a);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        h1 { margin: 0 0 15px 0; color: #38bdf8; font-size: 3rem; font-weight: 300; letter-spacing: -1px; }
+        p { color: #94a3b8; margin-bottom: 40px; font-size: 1.2rem; max-width: 600px; text-align: center; }
+
+        button {
+            padding: 18px 50px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            background: #38bdf8;
+            color: #0f172a;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(56, 189, 248, 0.3);
+            transition: all 0.2s;
+        }
+        button:hover { background: #7dd3fc; transform: translateY(-2px); }
+
+        /* Cinematic Labels */
+        .label {
+            position: absolute;
+            color: #fff;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 1s;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            border-left: 3px solid #38bdf8;
+            background: linear-gradient(90deg, rgba(0,0,0,0.6), rgba(0,0,0,0));
+            transform: translate(20px, -50%); /* Offset from point */
+        }
+        
+        .dot {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: #38bdf8;
+            border-radius: 50%;
+            border: 2px solid white;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 10px #38bdf8;
+            opacity: 0;
+            transition: opacity 1s;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="canvas-container"></div>
+    
+    <div id="ui-layer">
+        <div id="subtitle-box">Initializing Environment...</div>
+    </div>
+
+    <div id="start-overlay">
+        <h1>Dead Zone Formation</h1>
+        <p>A high-fidelity educational simulation visualizing the impact of eutrophication on marine ecosystems.</p>
+        <button id="start-btn">Enter Simulation</button>
+    </div>
+
+    <!-- Semantic Labels -->
+    <div id="lbl-fert" class="label">Excess Fertilizer</div>
+    <div id="dot-fert" class="dot"></div>
+
+    <div id="lbl-bloom" class="label">Algal Bloom</div>
+    <div id="dot-bloom" class="dot"></div>
+
+    <div id="lbl-hypoxia" class="label" style="border-color: #ef4444;">Hypoxia (Low Oxygen)</div>
+    <div id="dot-hypoxia" class="dot" style="background: #ef4444; box-shadow: 0 0 10px #ef4444;"></div>
+
+    <script>
+        // --- HIGH FIDELITY CONFIG ---
+        const CONFIG = {
+            oceanColor: 0x006994,
+            oceanSurfaceColor: 0x0099cc,
+            fogColor: 0x87CEEB,
+            algaeColor: 0x4caf50,
+            deadColor: 0x3e2723
+        };
+
+        // --- SCENE SETUP ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(CONFIG.fogColor); 
+        scene.fog = new THREE.FogExp2(CONFIG.fogColor, 0.008); // Realistic exponential fog
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 200);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Softer shadows
+        renderer.toneMapping = THREE.ACESFilmicToneMapping; // Cinematic color grading
+        renderer.toneMappingExposure = 1.0;
+        container.appendChild(renderer.domElement);
+
+        // --- ADVANCED LIGHTING ---
+        // 1. Hemisphere Light (Sky/Ground reflection)
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6);
+        hemiLight.position.set(0, 200, 0);
+        scene.add(hemiLight);
+
+        // 2. Directional Sun (Main shadow caster)
+        const sunLight = new THREE.DirectionalLight(0xffdfba, 1.5); // Warm sun
+        sunLight.position.set(50, 100, 50);
+        sunLight.castShadow = true;
+        sunLight.shadow.mapSize.width = 2048;
+        sunLight.shadow.mapSize.height = 2048;
+        sunLight.shadow.camera.near = 0.5;
+        sunLight.shadow.camera.far = 500;
+        // Widen shadow camera
+        const d = 100;
+        sunLight.shadow.camera.left = -d;
+        sunLight.shadow.camera.right = d;
+        sunLight.shadow.camera.top = d;
+        sunLight.shadow.camera.bottom = -d;
+        sunLight.shadow.bias = -0.0001;
+        scene.add(sunLight);
+
+        // --- ASSET GENERATION ---
+
+        // 1. Realistic Land
+        // Using noise-like displacement for terrain
+        const landGeo = new THREE.PlaneGeometry(200, 200, 64, 64);
+        const pos = landGeo.attributes.position;
+        for (let i = 0; i < pos.count; i++) {
+            const x = pos.getX(i);
+            const y = pos.getY(i);
+            // Create a slope + noise
+            let z = 0;
+            if (x < 0) {
+                 z = Math.abs(x) * 0.4; // Slope up to the left
+                 z += Math.sin(x * 0.2) * Math.cos(y * 0.2) * 2; // Undulation
+            } else {
+                z = -15; // Sea floor
+                z += Math.sin(x * 0.1) * 2;
+            }
+            pos.setZ(i, z);
+        }
+        landGeo.computeVertexNormals();
+        
+        const landMat = new THREE.MeshStandardMaterial({ 
+            color: 0x5d4037, 
+            roughness: 0.9, 
+            metalness: 0.1,
+            flatShading: false
+        });
+        const terrain = new THREE.Mesh(landGeo, landMat);
+        terrain.rotation.x = -Math.PI / 2;
+        terrain.receiveShadow = true;
+        scene.add(terrain);
+
+        // 2. Realistic Water (Transparent volume)
+        const oceanGeo = new THREE.PlaneGeometry(120, 200);
+        const oceanMat = new THREE.MeshPhysicalMaterial({
+            color: CONFIG.oceanSurfaceColor,
+            metalness: 0.1,
+            roughness: 0.1,
+            transmission: 0.6, // Glass-like transparency
+            opacity: 0.8,
+            transparent: true,
+            depthWrite: false, // Important for transparency sorting
+        });
+        const ocean = new THREE.Mesh(oceanGeo, oceanMat);
+        ocean.rotation.x = -Math.PI / 2;
+        ocean.position.set(60, -2, 0); // Water level
+        scene.add(ocean);
+
+        // Algae Layer (Hidden initially)
+        // Creating a noise texture for realism
+        function createNoiseTexture() {
+            const size = 256;
+            const canvas = document.createElement('canvas');
+            canvas.width = size; canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#000000'; ctx.fillRect(0,0,size,size);
+            
+            // Simple noise
+            for(let i=0; i<4000; i++) {
+                const x = Math.random()*size;
+                const y = Math.random()*size;
+                const r = Math.random()*3;
+                ctx.fillStyle = `rgba(100, 255, 100, ${Math.random()})`;
+                ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+            }
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        const algaeMat = new THREE.MeshBasicMaterial({ 
+            map: createNoiseTexture(),
+            color: 0x4caf50,
+            transparent: true, 
+            opacity: 0,
+            blending: THREE.AdditiveBlending 
+        });
+        const algae = new THREE.Mesh(oceanGeo, algaeMat);
+        algae.rotation.x = -Math.PI/2;
+        algae.position.y = -1.9; // Just above water surface
+        scene.add(algae);
+
+        // 3. Realistic Trees (Fractal-like)
+        function createTree(x, z) {
+            const treeGroup = new THREE.Group();
+            
+            // Trunk
+            const trunkGeo = new THREE.CylinderGeometry(0.5, 1, 4, 8);
+            const trunkMat = new THREE.MeshStandardMaterial({ color: 0x4e342e, roughness: 1 });
+            const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+            trunk.position.y = 2;
+            treeGroup.add(trunk);
+
+            // Foliage (Multiple spheres for cloud effect)
+            const foliageMat = new THREE.MeshStandardMaterial({ color: 0x2e7d32, roughness: 0.8 });
+            const foliageGeo = new THREE.DodecahedronGeometry(1.5);
+            
+            const p1 = new THREE.Mesh(foliageGeo, foliageMat);
+            p1.position.y = 4;
+            p1.castShadow = true;
+            treeGroup.add(p1);
+
+            const p2 = new THREE.Mesh(foliageGeo, foliageMat);
+            p2.position.set(1, 3.5, 0);
+            p2.scale.set(0.8, 0.8, 0.8);
+            p2.castShadow = true;
+            treeGroup.add(p2);
+
+            const p3 = new THREE.Mesh(foliageGeo, foliageMat);
+            p3.position.set(-1, 3.5, 0.5);
+            p3.scale.set(0.8, 0.8, 0.8);
+            p3.castShadow = true;
+            treeGroup.add(p3);
+
+            treeGroup.position.set(x, 0, z);
+            
+            // Raycast to find terrain height would be best, but simple math for now:
+            const y = Math.abs(x) * 0.4;
+            treeGroup.position.y = y;
+
+            return treeGroup;
+        }
+
+        const farmGroup = new THREE.Group();
+        for(let i=0; i<15; i++) {
+            const t = createTree(-30 - Math.random()*40, (Math.random()-0.5)*80);
+            farmGroup.add(t);
+        }
+        scene.add(farmGroup);
+
+        // 4. Hyper-Detailed Fish
+        function createRealisticFish(color) {
+            const fish = new THREE.Group();
+            
+            // Body - Streamlined
+            const bodyGeo = new THREE.SphereGeometry(1, 16, 16);
+            bodyGeo.scale(0.8, 0.4, 0.2); // Compressed sides
+            const bodyMat = new THREE.MeshStandardMaterial({ 
+                color: color, 
+                roughness: 0.4, 
+                metalness: 0.1 
+            });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            fish.add(body);
+
+            // Tail
+            const tailGeo = new THREE.BufferGeometry();
+            const tailVerts = new Float32Array([
+                -0.6, 0, 0,
+                -1.4, 0.5, 0,
+                -1.4, -0.5, 0
+            ]);
+            tailGeo.setAttribute('position', new THREE.BufferAttribute(tailVerts, 3));
+            tailGeo.computeVertexNormals();
+            const tail = new THREE.Mesh(tailGeo, bodyMat);
+            // tail.material.side = THREE.DoubleSide; // MeshStandard defaults to front
+            tailMat = new THREE.MeshStandardMaterial({ color: color, side: THREE.DoubleSide });
+            tail.material = tailMat;
+            fish.add(tail);
+
+            return fish;
+        }
+
+        const fishSchool = [];
+        for(let i=0; i<20; i++) {
+            const f = createRealisticFish(0xffb74d); // Orange/Gold
+            f.position.set(20 + Math.random()*60, -10 + Math.random()*8, (Math.random()-0.5)*60);
+            f.userData = {
+                baseY: f.position.y,
+                speed: 0.1 + Math.random()*0.1,
+                offset: Math.random() * 100,
+                dead: false
+            };
+            fishSchool.push(f);
+            scene.add(f);
+        }
+
+        // 5. Particles (Fertilizer)
+        const partGeo = new THREE.BufferGeometry();
+        const pCount = 500;
+        const pPos = new Float32Array(pCount*3);
+        const particles = new THREE.Points(
+            partGeo,
+            new THREE.PointsMaterial({ color: 0xffffff, size: 0.5, transparent: true, opacity: 0 })
+        );
+        scene.add(particles);
+
+        // --- NARRATION ENGINE (Female Voice Priority) ---
+        let voice = null;
+        function initVoice() {
+            const voices = window.speechSynthesis.getVoices();
+            // High quality female voices
+            const targets = ['Google US English', 'Microsoft Zira', 'Samantha', 'Victoria'];
+            for(let t of targets) {
+                voice = voices.find(v => v.name.includes(t));
+                if(voice) break;
+            }
+            if(!voice) voice = voices.find(v => v.name.includes('Female'));
+        }
+        window.speechSynthesis.onvoiceschanged = initVoice;
+
+        function speak(text, cb) {
+            document.getElementById('subtitle-box').innerText = text;
+            const u = new SpeechSynthesisUtterance(text);
+            if(voice) u.voice = voice;
+            u.rate = 0.9; // Slightly slower for education
+            u.pitch = 1.1; // Typically female range
+            u.onend = () => { setTimeout(cb, 500); };
+            window.speechSynthesis.speak(u);
+        }
+
+        // --- ANIMATION LOOP ---
+        const clock = new THREE.Clock();
+        
+        // State Machine
+        const STATE = {
+            running: false,
+            fertilizer: false,
+            bloom: false,
+            dark: false,
+            dead: false
+        };
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = clock.getElapsedTime();
+
+            // Fish Animation
+            fishSchool.forEach(f => {
+                if(STATE.dead) {
+                    // Float upside down
+                    if(f.rotation.z < Math.PI) f.rotation.z += 0.05;
+                    if(f.position.y < -3) f.position.y += 0.02; // Rise to surface
+                } else {
+                    // Swim
+                    f.position.x -= f.userData.speed;
+                    f.position.y = f.userData.baseY + Math.sin(time * 2 + f.userData.offset) * 0.5;
+                    f.rotation.y = Math.sin(time * 5 + f.userData.offset) * 0.1; // Wiggle
+                    
+                    // Loop around
+                    if(f.position.x < 10) f.position.x = 90;
+                }
+            });
+
+            // Fertilizer Particles
+            if(STATE.fertilizer) {
+                particles.material.opacity = 0.8;
+                for(let i=0; i<pCount; i++) {
+                    // Initialize if 0
+                    if(pPos[i*3] === 0) {
+                        pPos[i*3] = -40 + Math.random()*20; // x on land
+                        pPos[i*3+1] = 15; // y high
+                        pPos[i*3+2] = (Math.random()-0.5)*40;
+                    }
+                    
+                    // Logic: Fall -> Flow -> Dissolve
+                    if(pPos[i*3+1] > 0) {
+                        pPos[i*3+1] -= 0.3; // Fall
+                        pPos[i*3] += 0.1;   // Slope
+                    } else {
+                        pPos[i*3] += 0.4; // Flow right
+                    }
+
+                    if(pPos[i*3] > 60) pPos[i*3] = -40; // Reset
+                }
+                particles.geometry.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+                particles.geometry.attributes.position.needsUpdate = true;
+            }
+
+            // Bloom Growth
+            if(STATE.bloom) {
+                if(algae.material.opacity < 0.95) algae.material.opacity += 0.005;
+                // Darken water
+                ocean.material.color.lerp(new THREE.Color(0x004d40), 0.002);
+            }
+
+            // Lighting changes (Hypoxia darkness)
+            if(STATE.dark) {
+                sunLight.intensity = THREE.MathUtils.lerp(sunLight.intensity, 0.1, 0.01);
+                hemiLight.intensity = THREE.MathUtils.lerp(hemiLight.intensity, 0.1, 0.01);
+            }
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // --- SCRIPT SEQUENCE ---
+        
+        const SCRIPT = [
+            {
+                text: "Welcome to the simulation. Let's explore how a farm on land can destroy life deep in the ocean.",
+                camPos: {x:-50, y:40, z:50}, camLook: {x:-20, y:10, z:0},
+                action: null
+            },
+            {
+                text: "It starts here. Farmers use chemical fertilizers to grow crops. But sometimes, they use too much.",
+                camPos: {x:-30, y:20, z:20}, camLook: {x:-40, y:5, z:0},
+                action: () => {
+                    STATE.fertilizer = true;
+                    showLabel('lbl-fert', 'dot-fert', -40, 10, 0);
+                }
+            },
+            {
+                text: "When it rains, the excess fertilizer washes into the ground and flows directly into the sea.",
+                camPos: {x:0, y:20, z:60}, camLook: {x:0, y:0, z:0},
+                action: () => hideLabels()
+            },
+            {
+                text: "This process is called Eutrophication. The water becomes too rich in nutrients.",
+                camPos: {x:40, y:10, z:40}, camLook: {x:60, y:0, z:0},
+                action: null
+            },
+            {
+                text: "These nutrients feed the algae, causing an 'Algal Bloom'. A thick green layer forms on the surface.",
+                camPos: {x:60, y:20, z:20}, camLook: {x:60, y:0, z:0},
+                action: () => {
+                    STATE.bloom = true;
+                    showLabel('lbl-bloom', 'dot-bloom', 60, 0, 0);
+                }
+            },
+            {
+                text: "This green blanket blocks the sunlight. The deep ocean becomes dark, and underwater plants die.",
+                camPos: {x:60, y:-5, z:30}, camLook: {x:60, y:-10, z:0},
+                action: () => {
+                    hideLabels();
+                    STATE.dark = true;
+                }
+            },
+            {
+                text: "Bacteria consume the dead plants. But as they eat, they use up almost all the oxygen in the water.",
+                camPos: {x:60, y:-12, z:20}, camLook: {x:70, y:-15, z:0},
+                action: null
+            },
+            {
+                text: "Without oxygen, the fish cannot survive. They suffocate and die.",
+                camPos: {x:50, y:-8, z:40}, camLook: {x:50, y:-5, z:0},
+                action: () => {
+                    STATE.dead = true;
+                    showLabel('lbl-hypoxia', 'dot-hypoxia', 50, -5, 0);
+                }
+            },
+            {
+                text: "This area is now a Dead Zone. A tragic chain reaction caused by human activity.",
+                camPos: {x:0, y:80, z:100}, camLook: {x:20, y:0, z:0},
+                action: null
+            }
+        ];
+
+        let scriptIdx = 0;
+
+        function runScript() {
+            if(scriptIdx >= SCRIPT.length) return;
+            const s = SCRIPT[scriptIdx];
+            
+            // Move Camera
+            const startPos = camera.position.clone();
+            const startLook = camera.userData.lookAt || new THREE.Vector3(0,0,0);
+            const endPos = new THREE.Vector3(s.camPos.x, s.camPos.y, s.camPos.z);
+            const endLook = new THREE.Vector3(s.camLook.x, s.camLook.y, s.camLook.z);
+            
+            // Smooth Camera Transition (Simple Tween)
+            let progress = 0;
+            const dur = 100; // frames roughly
+            function camTween() {
+                progress += 0.01;
+                if(progress <= 1) {
+                    camera.position.lerpVectors(startPos, endPos, progress);
+                    // simple look lerp
+                    const curLook = new THREE.Vector3().lerpVectors(startLook, endLook, progress);
+                    camera.lookAt(curLook);
+                    camera.userData.lookAt = curLook;
+                    requestAnimationFrame(camTween);
+                }
+            }
+            camTween();
+
+            // Run action
+            if(s.action) s.action();
+
+            // Speak
+            speak(s.text, () => {
+                scriptIdx++;
+                runScript();
+            });
+        }
+
+        // --- UTILS ---
+        function showLabel(lid, did, x, y, z) {
+            const l = document.getElementById(lid);
+            const d = document.getElementById(did);
+            l.style.opacity = 1; d.style.opacity = 1;
+            
+            // Project 3D to 2D
+            const vec = new THREE.Vector3(x,y,z);
+            vec.project(camera);
+            const cx = (vec.x * .5 + .5) * window.innerWidth;
+            const cy = (-(vec.y * .5) + .5) * window.innerHeight;
+            
+            d.style.left = cx + 'px'; d.style.top = cy + 'px';
+            l.style.left = (cx + 20) + 'px'; l.style.top = cy + 'px';
+        }
+
+        function hideLabels() {
+            document.querySelectorAll('.label, .dot').forEach(e => e.style.opacity = 0);
+        }
+
+        // --- START ---
+        document.getElementById('start-btn').addEventListener('click', () => {
+            initVoice();
+            document.getElementById('start-overlay').style.display = 'none';
+            // Init camera look
+            camera.userData.lookAt = new THREE.Vector3(0,0,0);
+            runScript();
+        });
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+    </script>
+</body>
+</html>

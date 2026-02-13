@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bully Dailletin | Changelog</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-10 shadow-sm">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-600 text-white p-1.5 rounded-lg">
+                    <i data-lucide="newspaper" class="w-5 h-5"></i>
+                </div>
+                <h1 class="text-xl font-bold tracking-tight text-slate-900">Bully Dailletin</h1>
+            </div>
+            <div class="text-sm font-medium text-slate-500">
+                Latest: <span id="latest-version" class="text-blue-600">...</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="mb-10 text-center sm:text-left sm:flex sm:items-end sm:justify-between">
+                <div>
+                    <h2 class="text-3xl font-bold text-slate-900">Changelog</h2>
+                    <p class="mt-2 text-slate-500">Track all the latest updates, improvements, and fixes.</p>
+                </div>
+                <div class="mt-4 sm:mt-0 flex gap-2 overflow-x-auto pb-2 sm:pb-0 no-scrollbar">
+                    <button onclick="renderChangelog('all')" class="filter-btn active px-3 py-1.5 text-xs font-semibold rounded-full bg-slate-900 text-white transition-colors hover:bg-slate-700">All</button>
+                    <button onclick="renderChangelog('major')" class="filter-btn px-3 py-1.5 text-xs font-medium rounded-full bg-white border border-slate-200 text-slate-600 hover:border-blue-500 hover:text-blue-600 transition-colors">Major</button>
+                    <button onclick="renderChangelog('minor')" class="filter-btn px-3 py-1.5 text-xs font-medium rounded-full bg-white border border-slate-200 text-slate-600 hover:border-blue-500 hover:text-blue-600 transition-colors">Minor</button>
+                </div>
+            </div>
+            <div id="changelog-container" class="relative border-l border-slate-200 ml-3 sm:ml-4 space-y-12 pb-10"></div>
+            <div id="empty-state" class="hidden text-center py-20">
+                <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-100 mb-4">
+                    <i data-lucide="search-x" class="w-6 h-6 text-slate-400"></i>
+                </div>
+                <h3 class="text-lg font-medium text-slate-900">No updates found</h3>
+                <p class="text-slate-500">Try adjusting your filters.</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-8">
+        <div class="max-w-3xl mx-auto px-4 text-center">
+            <p class="text-sm text-slate-400">&copy; 2024 Bully Dailletin. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // ==========================================
+        // CONFIGURATION: EDIT YOUR CHANGELOGS HERE
+        // ==========================================
+        const changelogData = [
+    {
+        "version": "1.4.7",
+        "date": "2025-12-05",
+        "type": "minor",
+        "title": "GEOGRAPHY!!!",
+        "description": "",
+        "changes": [
+            {
+                "type": "added",
+                "text": "Geography UT 2 Dead Zone Formation"
+            },
+            {
+                "type": "added",
+                "text": "Geography UT 2 Dead Zone Game Mode"
+            }
+        ]
+    },
+    {
+        "version": "1.4.6",
+        "date": "2025-12-05",
+        "type": "minor",
+        "title": "OBFUSCATION",
+        "description": "As someone has cracked our code, we're introducing obfuscation.",
+        "changes": [
+            {
+                "type": "added",
+                "text": "Obfuscation"
+            }
+        ]
+    },
+    {
+        "version": "1.4.5",
+        "date": "2025-12-05",
+        "type": "minor",
+        "title": "CHRISTMAS DROP 1!!!!",
+        "description": "Yay it's Christmas dear _corpses_!",
+        "changes": [
+            {
+                "type": "added",
+                "text": "Christmas theme to: Index and Knowledge"
+            }
+        ]
+    },
+    {
+        "version": "1.4.4",
+        "date": "2025-12-04",
+        "type": "minor",
+        "title": "Team View",
+        "description": "",
+        "changes": [
+            {
+                "type": "added",
+                "text": "Team structure view"
+            }
+        ]
+    },
+    {
+        "version": "1.4.3",
+        "date": "2025-12-04",
+        "type": "minor",
+        "title": "Bully Dailletin",
+        "description": "",
+        "changes": [
+            {
+                "type": "added",
+                "text": "Bully Dailletin Changelog (This)"
+            }
+        ]
+    },
+    {
+        "version": "1.4.2",
+        "date": "2025-12-04",
+        "type": "minor",
+        "title": "Menstruation Video",
+        "description": "",
+        "changes": [
+            {
+                "type": "added",
+                "text": "Menstruation Video to Science UT 1 (Credits: @Karissa)"
+            }
+        ]
+    },
+    {
+        "version": "1.4.1",
+        "date": "2025-12-02",
+        "type": "major",
+        "title": "Chinese Dictionary Reviser",
+        "description": "\"Hello kids ! We're happy to announce even MORE features coming to UGA REV\n> Updates\n1. Added dictation reviser\n> Explanation \nThis new dictation reviser will help you revise your (Chinese) dictation more efficiently than ever!\nhttps://ugasuite.netlify.app\"",
+        "changes": [
+            {
+                "type": "added",
+                "text": "Dictation Reviser"
+            }
+        ]
+    },
+    {
+        "version": "1.4.0",
+        "date": "2025-11-29",
+        "type": "major",
+        "title": "Interactive Explanations",
+        "description": "\"Hello kids ! We're happy to announce even MORE thing coming to UGA Rev!\n> Updates\n* Added Science UT 2\n* First introduction of INTERACTIVE EXPLANATIONS\nYes kids , we are adding a new thing to spice up your revision.\nhttps://ugasuite.netlify.app/\"",
+        "changes": [
+            {
+                "type": "added",
+                "text": "Interactive Explanations for: \nReproduction\nCells\nMicroscope\nLife Cycles\nLiving Things\nVitals of living things"
+            }
+        ]
+    },
+    {
+        "version": "1.3.4",
+        "date": "2025-11-24",
+        "type": "minor",
+        "title": "Brain Gym Update",
+        "description": "\"Hi kids! Here at UGA REV we're happy to announce even MORE features! These are out NOW!\n> Updates:\n1. Brain Gym now has a more intuitive and duolingo-like road map interface. \n2. Brain Gym now has different Units with a lesson structure!\n3. Brain Gym now allows you to level up your UGA Rev level!\n4. Brain Gym now has more question types!\nHappy training your problem solving skills!\nhttps://ugarev.netlify.app/gym\"",
+        "changes": [
+            {
+                "type": "improved",
+                "text": "Brain Gym's UI, now more intuitive and has a road map"
+            },
+            {
+                "type": "added",
+                "text": "Different Units with a lesson structure to Brain Gym"
+            },
+            {
+                "type": "added",
+                "text": "Master points system to Brain Gym"
+            },
+            {
+                "type": "added",
+                "text": "More question types"
+            }
+        ]
+    },
+    {
+        "version": "1.3.3",
+        "date": "2025-11-23",
+        "type": "major",
+        "title": "Brain Gym",
+        "description": "\"New features just keep rolling in on UGA Rev. Today, we're introducing:\n> Updates\n1. Brain Gym - Challenge your brain to it's fullest, develop problem solving skills and more, all while having loads of fun!\n2. Bug fix - UGA Knows' WOTD bug has been fixed\nTrain your brain now with brain gym! (You don't need to pay)\nhttps://ugarev.netlify.app/\"",
+        "changes": [
+            {
+                "type": "added",
+                "text": "Brain Gym"
+            },
+            {
+                "type": "fixed",
+                "text": "UGA Know WOTD bug"
+            }
+        ]
+    },
+    {
+        "version": "1.3.2",
+        "date": "2025-11-22",
+        "type": "major",
+        "title": "The Knowledge Base",
+        "description": "\"Guys I've already told y'all that UGA Rev's going to have lots of updates these few days, and here they are:\n> Updates\n1. The Dictionary is now UGA Knows, completed with Wikipedia functions to enhance your experience!\n2. Article of the day is now a thing! Learn more about interesting topics!\nWe hope you will have a great time learning!\nhttps://ugarev.netlify.app/\"",
+        "changes": [
+            {
+                "type": "changed",
+                "text": "Dictionary is now UGA Knows"
+            },
+            {
+                "type": "added",
+                "text": "Encyclopedia to UGA Knows"
+            },
+            {
+                "type": "added",
+                "text": "Article of the day"
+            }
+        ]
+    },
+    {
+        "version": "1.3.1",
+        "date": "2025-12-11",
+        "type": "major",
+        "title": "Videos",
+        "description": "\"Now there are a whole LOT of features rolling in, including the new VIDEO LIBRARY \n> Dive deep into topics you previously thought you couldn't understand, learn more with the power of VIDEOS\nThere are currently a few subjects for you to choose from, and more coming soon!\n> This is a Premium-Only service and might be coming to the free version soon. Get premium by contacting me\nCheck it out:\nhttps://ugarev.netlify.app\"",
+        "changes": [
+            {
+                "type": "added",
+                "text": "Educational Video Library to Premium"
+            }
+        ]
+    },
+    {
+        "version": "1.3.0",
+        "date": "2025-11-18",
+        "type": "major",
+        "title": "Dictionary",
+        "description": "Guys there has been a whole LOT of changes these few days and we're happy to announce that there's even MORE coming.\n> Today's releases:\n- UGA REV Dictionary\n> Learn more about words, find out the meaning of the words you don't know, and learn NEW words with the Word of the day feature! \n- Technical Upgrades\n> Reading comprehensions now correctly save master score cookies\n\nGet these new features NOW by going to https://ugarev.netlify.app",
+        "changes": [
+            {
+                "type": "added",
+                "text": "UGA Rev Dictionary"
+            },
+            {
+                "type": "added",
+                "text": "Word of the day"
+            },
+            {
+                "type": "fixed",
+                "text": "Reading comprehensions not saving to master score cookie"
+            }
+        ]
+    },
+    {
+        "version": "1.2.0",
+        "date": "2025-11-17",
+        "type": "major",
+        "title": "Premium Update",
+        "description": "\"Guys I just added UGA REV PREMIUM at https://ugarev.netlify.app/ First 5 people to ask for it gets it for COMPLETELY FREE\n> Features\n- Study Resources \n- More coming really soon\"\n\"Guys along the launch of UGA REV Premium, we also have ranks now! Battle through the quizzes and earn points, leading to the ranks! The first person who reaches IRON gets free Premium!\nAnd also BTW we now have Math notes and math quiz\nhttps://ugarev.netlify.app/\"",
+        "changes": [
+            {
+                "type": "added",
+                "text": "UGA REV Premium"
+            },
+            {
+                "type": "added",
+                "text": "Chinese Study Resources"
+            },
+            {
+                "type": "changed",
+                "text": "Chinese History Study Resources now only avaliable in Premium"
+            },
+            {
+                "type": "added",
+                "text": "Ranks and Points system"
+            },
+            {
+                "type": "added",
+                "text": "Math UT 2 Notes"
+            },
+            {
+                "type": "improved",
+                "text": "Math UT 2 Challenge"
+            }
+        ]
+    },
+    {
+        "version": "1.1.3",
+        "date": "2025-11-16",
+        "type": "minor",
+        "title": "Math UT 2",
+        "description": "\"*UGA REV IS BACK FOR ANOTHER ROUND*\nWe now have resources regarding the 2nd Math UT for S1. \nRevise.\nhttps://ugarev.netlify.app\"",
+        "changes": [
+            {
+                "type": "added",
+                "text": "Math UT 2 Resources"
+            }
+        ]
+    },
+    {
+        "version": "1.1.2",
+        "date": "2025-11-12",
+        "type": "major",
+        "title": "Chinese Reading",
+        "description": "\"guys we have added chinese reading practices to  https://ugarev.netlify.app/ Check them out\"",
+        "changes": [
+            {
+                "type": "added",
+                "text": "Chinese Reading Practices"
+            }
+        ]
+    },
+    {
+        "version": "1.1.1",
+        "date": "2025-11-11",
+        "type": "major",
+        "title": "Games + Files update",
+        "description": "\"> *NEW UPDATE TO UGA REV*\nHello y'all! This is the amazing team from DBP.\nWe've added a dozen of new features to *UGA REV*, including:\n- Polytrack in games mode (S1 GEO only)\n- Chinese History Extra study resources (past papers and more!)\nCheck them out *NOW* at:\nhttps://ugarev.netlify.app !!!!!\n_(Good luck tmr Chinese history)_\"",
+        "changes": [
+            {
+                "type": "added",
+                "text": "Polytrack to Geography game"
+            },
+            {
+                "type": "added",
+                "text": "Chinese History Extra study resources"
+            }
+        ]
+    },
+    {
+        "version": "1.1.0",
+        "date": "2025-11-07",
+        "type": "major",
+        "title": "Games",
+        "description": "\"Guys new update to https://ugarev.netlify.app !!!\nWe've added a *FEW* new game modes, currently *ONLY* avaliable in *GEOGRAPHY*\nCheck them out\"",
+        "changes": [
+            {
+                "type": "added",
+                "text": "Games to Geography"
+            }
+        ]
+    },
+    {
+        "version": "1.0.1",
+        "date": "2025-11-08",
+        "type": "minor",
+        "title": "Chinese History Questions",
+        "description": "\"S1 Chinese History UT is coming up, we have added more questions to the database! Revise now at https://ugarev.netlify.app/\"",
+        "changes": [
+            {
+                "type": "added",
+                "text": "More Chinese History UT 1 Questions"
+            }
+        ]
+    },
+    {
+        "version": "1.0.0",
+        "date": "2025-11-07",
+        "type": "major",
+        "title": "The All Rounded Update",
+        "description": "\"Guys we have *_NEW FEATURES_* on https://ugarev.netlify.app/\n1. Flashcards\n2. Notes\nCheck them out now!\"",
+        "changes": [
+            {
+                "type": "added",
+                "text": "Flashcards to every UT"
+            },
+            {
+                "type": "added",
+                "text": "Notes to every UT"
+            },
+            {
+                "type": "added",
+                "text": "One more layer to the tree in main menu"
+            }
+        ]
+    },
+    {
+        "version": "0.1.4",
+        "date": "2025-11-06",
+        "type": "major",
+        "title": "Science UT 1",
+        "description": "\"Guys I just added S1 Science\" \"As requested by @⁨Rex Kwok S1K\"",
+        "changes": [
+            {
+                "type": "added",
+                "text": "Science UT 1"
+            }
+        ]
+    },
+    {
+        "version": "0.1.4",
+        "date": "2025-11-06",
+        "type": "major",
+        "title": "Maths",
+        "description": "\"From suggestion of Jaden, I've added S1 Math to https://ugarev.netlify.app/\" \"There's currently UT 1 and 2\"",
+        "changes": [
+            {
+                "type": "added",
+                "text": "Math UT 1"
+            },
+            {
+                "type": "added",
+                "text": "Math UT 2"
+            }
+        ]
+    },
+    {
+        "version": "0.1.3",
+        "date": "2025-11-06",
+        "type": "patch",
+        "title": "Chromium Visual Patch",
+        "description": "\"Guys i fixed a bug that made the site look like this check it out https://ugarev.netlify.app/\"",
+        "changes": [
+            {
+                "type": "fixed",
+                "text": "Chromium Visual Bug for Counter"
+            }
+        ]
+    },
+    {
+        "version": "0.1.2",
+        "date": "2025-11-06",
+        "type": "major",
+        "title": "The Subjects Update",
+        "description": "\"I added other subjects to ugarev.netlify.app\"",
+        "changes": [
+            {
+                "type": "added",
+                "text": "Geography UT 1"
+            },
+            {
+                "type": "added",
+                "text": "History UT 1"
+            }
+        ]
+    },
+    {
+        "version": "0.1.1",
+        "date": "2025-11-06",
+        "type": "minor",
+        "title": "Pretty Funny TBH",
+        "description": "\"guys i added a special feature to ugarev.netlify.app\"",
+        "changes": [
+            {
+                "type": "added",
+                "text": "A funny image to Chinese History UT 1"
+            }
+        ]
+    },
+    {
+        "version": "0.1.0",
+        "date": "2025-11-06",
+        "type": "major",
+        "title": "Chinese History",
+        "description": "\"We now hv Chinese History UT 1\"",
+        "changes": [
+            {
+                "type": "added",
+                "text": "Chinese History UT 2"
+            },
+            {
+                "type": "added",
+                "text": "Main menu"
+            },
+            {
+                "type": "added",
+                "text": "View counter"
+            },
+            {
+                "type": "added",
+                "text": "UT Suggester"
+            }
+        ]
+    },
+    {
+        "version": "0.0.3",
+        "date": "2025-11-06",
+        "type": "minor",
+        "title": "Long Questions",
+        "description": "\"https://ugarev.netlify.app/s1chiut1 guys its updated there's long questions now!\"",
+        "changes": [
+            {
+                "type": "added",
+                "text": "Long questions"
+            }
+        ]
+    },
+    {
+        "version": "0.0.2",
+        "date": "2025-11-05",
+        "type": "minor",
+        "title": "Chinese Reading UT",
+        "description": "\"pro max version now out guys\"",
+        "changes": [
+            {
+                "type": "added",
+                "text": "80 more questions"
+            }
+        ]
+    },
+    {
+        "version": "0.0.1",
+        "date": "2025-11-05",
+        "type": "major",
+        "title": "UGA REV RELEASE",
+        "description": "The first version of UGA REV\n\"i kindly helped u guys to let AI generate some questions for tmr chi ut\"",
+        "changes": [
+            {
+                "type": "added",
+                "text": "Chinese S1 Reading UT 1"
+            }
+        ]
+    }
+];
+
+        // ==========================================
+        // LOGIC (Do not necessarily need to edit below)
+        // ==========================================
+
+        const badges = {
+            added:    { bg: "bg-emerald-100", text: "text-emerald-700", label: "New" },
+            fixed:    { bg: "bg-blue-100",    text: "text-blue-700",    label: "Fixed" },
+            changed:  { bg: "bg-amber-100",   text: "text-amber-700",   label: "Changed" },
+            removed:  { bg: "bg-red-100",     text: "text-red-700",     label: "Removed" },
+            improved: { bg: "bg-violet-100",  text: "text-violet-700",  label: "Improved" }
+        };
+
+        const container = document.getElementById('changelog-container');
+        const emptyState = document.getElementById('empty-state');
+        const latestVersionSpan = document.getElementById('latest-version');
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if(changelogData.length > 0) {
+                latestVersionSpan.textContent = `v${changelogData[0].version}`;
+            }
+            renderChangelog('all');
+            lucide.createIcons();
+        });
+
+        function renderChangelog(filterType) {
+            container.innerHTML = '';
+            const filteredData = filterType === 'all' 
+                ? changelogData 
+                : changelogData.filter(item => item.type === filterType);
+
+            if (filteredData.length === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.className = "filter-btn px-3 py-1.5 text-xs font-medium rounded-full bg-white border border-slate-200 text-slate-600 hover:border-blue-500 hover:text-blue-600 transition-colors cursor-pointer";
+                if (btn.innerText.toLowerCase() === filterType || (filterType === 'all' && btn.innerText === 'All')) {
+                    btn.className = "filter-btn px-3 py-1.5 text-xs font-semibold rounded-full bg-slate-900 text-white transition-colors cursor-pointer shadow-sm";
+                }
+            });
+
+            filteredData.forEach(log => {
+                const logItem = document.createElement('div');
+                logItem.className = 'relative pl-8 sm:pl-10 group';
+                const dateObj = new Date(log.date);
+                const dateStr = dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                
+                let changesHtml = '';
+                log.changes.forEach(change => {
+                    const badgeConfig = badges[change.type] || { bg: "bg-slate-100", text: "text-slate-600", label: change.type };
+                    changesHtml += `
+                        <li class="flex items-start gap-3 text-sm">
+                            <span class="flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${badgeConfig.bg} ${badgeConfig.text}">
+                                ${badgeConfig.label}
+                            </span>
+                            <span class="text-slate-600 leading-relaxed pt-0.5">${change.text}</span>
+                        </li>
+                    `;
+                });
+
+                const descHtml = log.description 
+                    ? `<p class="text-slate-500 mb-4 text-sm leading-relaxed border-b border-slate-100 pb-4">${log.description}</p>` 
+                    : '';
+
+                logItem.innerHTML = `
+                    <div class="absolute -left-[5px] top-1.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-blue-600 ring-4 ring-slate-50"></div>
+                    <div class="flex flex-col sm:flex-row sm:items-baseline sm:justify-between mb-2">
+                        <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                            ${log.title || 'Update'}
+                            <span class="text-sm font-normal text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">v${log.version}</span>
+                        </h3>
+                        <time class="text-xs font-medium text-slate-400 mt-1 sm:mt-0 uppercase tracking-wide">${dateStr}</time>
+                    </div>
+                    <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow duration-200">
+                        ${descHtml}
+                        <ul class="space-y-3">
+                            ${changesHtml}
+                        </ul>
+                    </div>
+                `;
+                container.appendChild(logItem);
+            });
+            lucide.createIcons();
+        }
+    </script>
+</body>
+</html>

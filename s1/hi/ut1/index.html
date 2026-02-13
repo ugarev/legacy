@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>History UT 1</title>
+    <link rel="icon" type="image/x-icon" href="../../icon.png">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
+
+        :root {
+            --primary-color: #4A90E2;
+            --secondary-color: #50E3C2;
+            --correct-color: #28a745;
+            --incorrect-color: #dc3545;
+            --warning-color: #db7B2b;
+            --bg-color: #f4f7f9;
+            --text-color: #333;
+            --white: #FFFFFF;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 900px;
+            background-color: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            text-align: center;
+        }
+
+        #start-screen, #end-screen {
+            padding: 50px;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        #start-screen p {
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+        }
+
+        #start-button, .restart-button {
+            background-color: var(--primary-color);
+            color: var(--white);
+            border: none;
+            padding: 15px 35px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        #start-button:hover, .restart-button:hover {
+            background-color: #357ABD;
+            transform: translateY(-2px);
+        }
+
+        #quiz-screen {
+            display: none;
+        }
+
+        #header {
+            padding: 20px 30px;
+            background-color: var(--primary-color);
+            color: var(--white);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #header div {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        #question-container {
+            padding: 30px 40px;
+        }
+
+        #question-text {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 25px;
+            min-height: 70px;
+            line-height: 1.5;
+        }
+
+        #timer {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            background-color: #eef5ff;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 20px;
+            border: 4px solid var(--primary-color);
+            transition: all 0.3s;
+        }
+
+        #timer.warning {
+            color: var(--incorrect-color);
+            border-color: var(--incorrect-color);
+        }
+
+        #options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        /* 長問答輸入框 */
+        #long-answer-container {
+            display: none;
+            margin-top: 20px;
+        }
+        
+        #long-answer-input {
+            width: 90%;
+            height: 120px;
+            font-size: 1rem;
+            font-family: 'Noto Sans TC', sans-serif;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+        }
+        
+        #submit-long-answer {
+            background-color: var(--secondary-color);
+            color: var(--white);
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        
+        #submit-long-answer:hover {
+            background-color: #40B89F;
+            transform: translateY(-2px);
+        }
+        
+        #submit-long-answer:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .option-button {
+            background-color: var(--white);
+            border: 2px solid #ddd;
+            color: var(--text-color);
+            padding: 20px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 60px;
+        }
+
+        .option-button:hover:not(:disabled) {
+            background-color: #f0f5ff;
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .option-button.correct {
+            background-color: var(--correct-color);
+            border-color: var(--correct-color);
+            color: var(--white);
+        }
+
+        .option-button.incorrect {
+            background-color: var(--incorrect-color);
+            border-color: var(--incorrect-color);
+            color: var(--white);
+        }
+
+        .option-button:disabled {
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+
+        #feedback-container {
+            margin-top: 20px;
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #feedback {
+            font-size: 1.3rem;
+            font-weight: 700;
+            text-align: left;
+            padding: 0 10px;
+        }
+        
+        #feedback-answer {
+            font-size: 1rem;
+            font-weight: 400;
+            color: #555;
+            margin-top: 10px;
+            text-align: left;
+            padding: 0 10px;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        #next-button {
+            background-color: var(--secondary-color);
+            color: var(--white);
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+            display: none;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        #next-button:hover {
+            background-color: #40B89F;
+            transform: translateY(-2px);
+        }
+
+        #end-screen {
+            display: none;
+        }
+
+        #final-score {
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            font-weight: 700;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+
+        <div id="start-screen">
+            <h1>S1 History UT 1</h1>
+            <h2>The Challenge</h2>
+            <p>Presented by Deadibone Productions</p>
+            <button id="start-button">Start</button>
+        </div>
+
+        <div id="quiz-screen">
+            <div id="header">
+                <div id="question-counter">Question 1 / 10</div>
+                <div id="score">Score: 0 / 20</div>
+            </div>
+            <div id="question-container">
+                <div id="timer">15</div>
+                <div id="question-text">This is the question...</div>
+                
+                <div id="options-grid">
+                    </div>
+                
+                <div id="long-answer-container">
+                    <textarea id="long-answer-input" placeholder="Type your answer here..."></textarea>
+                    <button id="submit-long-answer">Submit</button>
+                </div>
+                
+                <div id="feedback-container">
+                    <div id="feedback"></div>
+                    <div id="feedback-answer"></div> <button id="next-button">Next</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="end-screen">
+            <h1>Challenge done!</h1>
+            <div id="final-score">Your total score: 0 / 20</div>
+            <p>Practice makes perfect, keep revising!</p>
+            <button class="restart-button">Try again</button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- NEW: COOKIE HELPER FUNCTIONS ---
+        // (Copied from index.html)
+        function setCookie(name, value, days) {
+            let expires = "";
+            if (days) {
+                const date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + (value || "") + expires + "; path=/; SameSite=Lax";
+        }
+
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+        // --- END COOKIE FUNCTIONS ---
+
+        const allQuestions = [
+    // *** ADDITIONAL LONG ANSWER QUESTIONS (2/1/0 Scoring) - S1 History UT1 ***
+    { 
+        time: 60, 
+        type: "long",
+        question: "Explain the two primary purposes of including references in academic work according to your notes.", 
+        fullMarkKeys: ["identify", "check", "reliable", "source", "credits", "original", "authors", "recognize"], // Must include the idea of source identification/reliability AND giving credit
+        partialMarkKeys: ["avoid plagiarism", "academic honesty", "trust", "evidence"], // 1 point for mentioning either 'source identification' or 'giving credit'
+        feedback: "Reference Answer (2 points): The two main purposes are: 1) To **help others** easily **identify** the **source** of information so they can **check** its **reliability**. 2) To **give credits** to the **original authors** for their ideas and hard work, which supports **academic honesty**. (1 point): Mentioning only one of the two distinct purposes."
+    },
+    { 
+        time: 60, 
+        type: "long",
+        question: "Describe the process of calculating the **century** and **decade** for the year **AD 1842** based on the rules provided in your notes.", 
+        fullMarkKeys: ["century", "add 1", "18+1", "19th", "decade", "00-09", "40-49", "5th"], // Must correctly identify the 19th century AND the 5th decade
+        partialMarkKeys: ["19th", "5th", "rule", "calculate", "years"], // 1 point for correctly calculating the century OR the decade
+        feedback: "Reference Answer (2 points): To find the **century**, we take the first two digits (18) and **add 1**, resulting in the **19th century**. To find the **decade**, we look at the last two digits (42); since years 40-49 fall in the **5th decade**, AD 1842 is in the **5th decade**. (1 point): Correctly identifying both the century and the decade without a clear explanation of the rule."
+    },
+    { 
+        time: 60, 
+        type: "long",
+        question: "Explain the term 'Punti' in the context of Hong Kong's dialect groups and identify ONE key feature of their traditional settlement.", 
+        fullMarkKeys: ["Punti", "Cantonese", "earliest", "settle", "walled village", "fertile", "plain", "New Territories"], // Must include the meaning of Punti + settlement type
+        partialMarkKeys: ["Wai Tau", "Ming and Qing", "farmers", "protection"], // 1 point for either the meaning of Punti OR the settlement type
+        feedback: "Reference Answer (2 points): 'Punti' refers to the **Cantonese** dialect group, who were the **earliest** group to **settle** in Hong Kong. They typically settled in the **fertile plains** of the New Territories and lived in **walled villages** for **protection**. (1 point): Correctly identifying 'Punti' as the Cantonese group."
+    },
+    { 
+        time: 60, 
+        type: "long",
+        question: "How did the belief system in early Hong Kong contribute to a **diverse culture**?", 
+        fullMarkKeys: ["inland", "sea deities", "worshipped", "different", "Tin Hau", "Hung Shing", "contributed", "diverse"], // Must include inland adoption of sea beliefs
+        partialMarkKeys: ["coastal", "ancestral", "Pao Kung", "Kwan Tai", "popular religion"], // 1 point for listing two different beliefs from different groups
+        feedback: "Reference Answer (2 points): The **Boat People** and **Fuklo** initially worshipped **sea deities** like **Tin Hau** for a safe return. Later, **inland** people who originally followed popular Chinese religion (like **ancestral** worship and **Kwan Tai**) also began worshipping Tin Hau, leading to the combination of beliefs which **contributed** to the **diverse culture**. (1 point): Identifying that different groups had different core beliefs (sea vs. inland)."
+    },
+
+    // --- ADDITIONAL MULTIPLE CHOICE QUESTIONS (MCQ) - S1 History UT1 ---
+    { 
+        time: 15, 
+        question: "Which time unit encompasses the range of years 1-1000?", 
+        correctAnswer: "1st millennium", 
+        incorrectAnswers: ["10th century", "1st decade", "1st century"] 
+    },
+    { 
+        time: 15, 
+        question: "Which of the following is an example of a **non-written source** for studying history?", 
+        correctAnswer: "A coin dug up from an ancient site", 
+        incorrectAnswers: ["A diary written by an ancient farmer", "A government document from the Ming Dynasty", "A genealogy book of the Tang Clan"] 
+    },
+    { 
+        time: 15, 
+        question: "What is the consequence of **not citing the source** when adding a quotation in your work?", 
+        correctAnswer: "It is a common form of plagiarism", 
+        incorrectAnswers: ["It is a proper way to paraphrase", "It is only required for long quotes", "It is only necessary for primary sources"] 
+    },
+    { 
+        time: 15, 
+        question: "In which century and millennium does the year **BC 214** belong?", 
+        correctAnswer: "3rd century BC, 1st millennium BC", 
+        incorrectAnswers: ["2nd century BC, 1st millennium BC", "3rd century BC, 2nd millennium BC", "2nd century BC, 2nd millennium BC"] 
+    },
+    { 
+        time: 15, 
+        question: "The **Ancestral Hall** in a walled village served multiple purposes. Which of the following was NOT one of its key functions?", 
+        correctAnswer: "A permanent barracks for the village police force", 
+        incorrectAnswers: ["A place for ancestral worship", "A meeting room for discussing village affairs", "A school for teaching the children"] 
+    },
+    { 
+        time: 15, 
+        question: "Which dialect group's name literally means **'guest families'**?", 
+        correctAnswer: "Hakka", 
+        incorrectAnswers: ["Cantonese", "Fuklo", "Tanka"] 
+    },
+    { 
+        time: 15, 
+        question: "The **Fuklo (Hoklo)** dialect group originated mainly from which area before settling along the coast of Hong Kong?", 
+        correctAnswer: "Fujian and east of Guangdong", 
+        incorrectAnswers: ["Shandong and Hebei", "Sichuan and Yunnan", "Guangxi and Hainan"] 
+    },
+    { 
+        time: 15, 
+        question: "According to the notes, which of the following best describes the social status of the **Five Great Clans' founding fathers**?", 
+        correctAnswer: "High social status due to scholarly titles or being officials", 
+        incorrectAnswers: ["Low social status due to being pirates and bandits", "Average social status as simple farmers", "High status because they were the first to worship Tin Hau"] 
+    },
+    { 
+        time: 15, 
+        question: "If a student uses statistics from an academic paper without citing the source, which common form of plagiarism is this?", 
+        correctAnswer: "Using the statistics, graphs, or charts without citing the source", 
+        incorrectAnswers: ["Directly copying from others", "Rewriting others' work without citations", "Adding quotations, but not citing the source"] 
+    },
+];
+        // ----------------------------------------------------
+        // (GAME LOGIC)
+        // ----------------------------------------------------
+        
+        // DOM 
+        const startScreen = document.getElementById('start-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const endScreen = document.getElementById('end-screen');
+        const startButton = document.getElementById('start-button');
+        const restartButtons = document.querySelectorAll('.restart-button');
+        const questionCounter = document.getElementById('question-counter');
+        const timerDisplay = document.getElementById('timer');
+        const scoreDisplay = document.getElementById('score');
+        const questionText = document.getElementById('question-text');
+        const optionsGrid = document.getElementById('options-grid');
+        const feedback = document.getElementById('feedback');
+        const feedbackAnswer = document.getElementById('feedback-answer');
+        const nextButton = document.getElementById('next-button');
+        const finalScore = document.getElementById('final-score');
+        
+        const longAnswerContainer = document.getElementById('long-answer-container');
+        const longAnswerInput = document.getElementById('long-answer-input');
+        const submitLongAnswer = document.getElementById('submit-long-answer');
+
+        // VARS
+        let currentGameQuestions = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let timer;
+        let timeLeft = 15;
+        const TOTAL_SCORE = 20;
+
+        function shuffleArray(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex != 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        function startGame() {
+            const mcQuestions = allQuestions.filter(q => q.type !== 'long');
+            const laQuestions = allQuestions.filter(q => q.type === 'long');
+            
+            const shuffledMC = shuffleArray(mcQuestions).slice(0, 8);
+            const shuffledLA = shuffleArray(laQuestions).slice(0, 2);
+            
+            currentGameQuestions = shuffleArray([...shuffledMC, ...shuffledLA]);
+            
+            currentQuestionIndex = 0;
+            score = 0;
+            startScreen.style.display = 'none';
+            endScreen.style.display = 'none';
+            quizScreen.style.display = 'block';
+            scoreDisplay.textContent = `Score: 0 / ${TOTAL_SCORE}`;
+            
+            showQuestion();
+        }
+
+        function showQuestion() {
+            resetQuestionState();
+            const question = currentGameQuestions[currentQuestionIndex];
+            
+            questionText.textContent = question.question;
+            questionCounter.textContent = `Question ${currentQuestionIndex + 1} / 10`;
+            
+            timeLeft = question.time || 15;
+            timerDisplay.textContent = timeLeft;
+            if (timeLeft > 15) {
+                timerDisplay.style.borderColor = "var(--secondary-color)";
+                timerDisplay.style.color = "var(--secondary-color)";
+            }
+            
+            if (question.type === "long") {
+                optionsGrid.style.display = 'none';
+                longAnswerContainer.style.display = 'block';
+                longAnswerInput.value = '';
+                submitLongAnswer.onclick = submitLongAnswerHandler; 
+            } else {
+                optionsGrid.style.display = 'grid';
+                longAnswerContainer.style.display = 'none';
+                
+                let options = [];
+                if (question.correctAnswer === "True" || question.correctAnswer === "False" || question.correctAnswer === "Not Given") {
+                    options = ["True", "False", "Not Given"];
+                } else {
+                    options = [question.correctAnswer, ...question.incorrectAnswers];
+                }
+                
+                const shuffledOptions = shuffleArray([...options]);
+                
+                optionsGrid.innerHTML = '';
+                
+                if (shuffledOptions.length <= 3) {
+                    optionsGrid.style.gridTemplateColumns = '1fr';
+                } else {
+                    optionsGrid.style.gridTemplateColumns = '1fr 1fr';
+                }
+
+                shuffledOptions.forEach(option => {
+                    const button = document.createElement('button');
+                    button.textContent = option;
+                    button.classList.add('option-button');
+                    button.onclick = selectMCQAnswer; 
+                    optionsGrid.appendChild(button);
+                });
+            }
+            
+            startTimer();
+        }
+
+        function resetQuestionState() {
+            feedback.textContent = '';
+            feedbackAnswer.textContent = '';
+            nextButton.style.display = 'none';
+            timerDisplay.classList.remove('warning');
+            timerDisplay.style.borderColor = "var(--primary-color)";
+            timerDisplay.style.color = "var(--primary-color)";
+            
+            optionsGrid.style.display = 'none';
+            longAnswerContainer.style.display = 'none';
+            
+            document.querySelectorAll('.option-button').forEach(button => {
+                button.disabled = false;
+                button.onclick = null;
+            });
+            longAnswerInput.disabled = false;
+            submitLongAnswer.disabled = false;
+            submitLongAnswer.onclick = null;
+        }
+
+        function startTimer() {
+            timer = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = timeLeft;
+                if (timeLeft <= 5) {
+                    timerDisplay.classList.add('warning');
+                    timerDisplay.style.borderColor = "var(--incorrect-color)";
+                    timerDisplay.style.color = "var(--incorrect-color)";
+                }
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    timeUp();
+                }
+            }, 1000);
+        }
+
+        function timeUp() {
+            clearInterval(timer);
+            feedback.textContent = "Times up! 0 marks";
+            feedback.style.color = "var(--warning-color)";
+            
+            const question = currentGameQuestions[currentQuestionIndex];
+            if (question.type === "long") {
+                feedbackAnswer.textContent = question.feedback; 
+            }
+            
+            disableOptions();
+            showCorrectAnswer();
+            nextButton.style.display = 'block';
+        }
+
+        function selectMCQAnswer(e) {
+            clearInterval(timer);
+            const selectedButton = e.target;
+            const selectedAnswer = selectedButton.textContent;
+            const correctAnswer = currentGameQuestions[currentQuestionIndex].correctAnswer;
+
+            disableOptions();
+
+            if (selectedAnswer === correctAnswer) {
+                score += 2;
+                scoreDisplay.textContent = `Score: ${score} / ${TOTAL_SCORE}`;
+                feedback.textContent = "Correct! +2 marks";
+                feedback.style.color = "var(--correct-color)";
+                selectedButton.classList.add('correct');
+            } else {
+                feedback.textContent = "Incorrect. 0 marks";
+                feedback.style.color = "var(--incorrect-color)";
+                selectedButton.classList.add('incorrect');
+                showCorrectAnswer();
+            }
+            
+            nextButton.style.display = 'block';
+        }
+        
+        function submitLongAnswerHandler() {
+            clearInterval(timer);
+            const userAnswer = longAnswerInput.value;
+            const question = currentGameQuestions[currentQuestionIndex];
+            
+            disableOptions();
+
+            let fullMarkMatchCount = 0;
+            for (const key of question.fullMarkKeys) {
+                if (userAnswer.includes(key)) {
+                    fullMarkMatchCount++;
+                }
+            }
+
+            if (fullMarkMatchCount === question.fullMarkKeys.length) {
+                score += 2;
+                scoreDisplay.textContent = `Score: ${score} / ${TOTAL_SCORE}`;
+                feedback.textContent = "Fully correct! +2 marks";
+                feedback.style.color = "var(--correct-color)";
+            } else {
+                let partialMarkMatchCount = 0;
+                for (const key of question.partialMarkKeys) {
+                    if (userAnswer.includes(key)) {
+                        partialMarkMatchCount++;
+                        break; 
+                    }
+                }
+
+                if (fullMarkMatchCount > 0 || partialMarkMatchCount > 0) {
+                    // --- 1分 ---
+                    score += 1;
+                    scoreDisplay.textContent = `Score: ${score} / ${TOTAL_SCORE}`;
+                    feedback.textContent = "Partially Correct +1 mark";
+                    feedback.style.color = "var(--warning-color)";
+                } else {
+                    // --- 0分 ---
+                    feedback.textContent = "Incorrect. 0 marks";
+                    feedback.style.color = "var(--incorrect-color)";
+                }
+            }
+            
+            feedbackAnswer.textContent = question.feedback; 
+            nextButton.style.display = 'block';
+        }
+
+        function showCorrectAnswer() {
+             const question = currentGameQuestions[currentQuestionIndex];
+             if (question.type !== "long") {
+                const correctAnswer = question.correctAnswer;
+                document.querySelectorAll('.option-button').forEach(button => {
+                    if (button.textContent === correctAnswer) {
+                        button.classList.add('correct');
+                    }
+                });
+             }
+        }
+
+        function disableOptions() {
+            document.querySelectorAll('.option-button').forEach(button => {
+                button.disabled = true;
+                button.onclick = null;
+            });
+            longAnswerInput.disabled = true;
+            submitLongAnswer.disabled = true;
+            submitLongAnswer.onclick = null;
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < currentGameQuestions.length) {
+                showQuestion();
+            } else {
+                showEndScreen();
+            }
+        }
+
+        // --- THIS IS THE MODIFIED FUNCTION ---
+        function showEndScreen() {
+            quizScreen.style.display = 'none';
+            endScreen.style.display = 'block';
+            finalScore.textContent = `Your final score: ${score} / ${TOTAL_SCORE}`;
+            
+            // --- NEW COOKIE LOGIC ---
+            // 1. Get the old score from the cookie
+            const oldScoreStr = getCookie("score");
+            const oldScore = parseInt(oldScoreStr || "0", 10);
+            
+            // 2. Calculate the new total score (old score + score from this game)
+            // 'score' is the variable from this challenge
+            const newTotalScore = oldScore + score; 
+
+            // 3. Save the new total score back to the cookie
+            // Set it for 10 year (3650 days)
+            setCookie("score", newTotalScore, 3650);
+            
+            console.log(`Old score: ${oldScore}, Score from this game: ${score}, New total score: ${newTotalScore}`);
+            // --- END NEW LOGIC ---
+        }
+        // --- END MODIFIED FUNCTION ---
+
+
+        startButton.addEventListener('click', startGame);
+        nextButton.addEventListener('click', nextQuestion);
+        restartButtons.forEach(button => button.addEventListener('click', startGame));
+        
+    </script>
+</body>
+</html>

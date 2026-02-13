@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>閱讀挑戰 - 《一碗水》</title>
+    <link rel="icon" type="image/x-icon" href="../../icon.png">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
+
+        :root {
+            --primary-color: #4A90E2;
+            --secondary-color: #50E3C2;
+            --correct-color: #28a745;
+            --incorrect-color: #dc3545;
+            --warning-color: #db7B2b;
+            --bg-color: #f4f7f9;
+            --text-color: #333;
+            --white: #FFFFFF;
+            --border-color: #ddd;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 1200px; /* Increased slightly for side-by-side reading */
+            background-color: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            text-align: center;
+        }
+
+        #start-screen, #end-screen {
+            padding: 40px 50px;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+        
+        h2 {
+            color: var(--text-color);
+            margin-top: 0;
+        }
+
+        #start-screen p {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: var(--text-color);
+        }
+        
+        .credits {
+            font-size: 0.9rem !important;
+            color: #888 !important;
+            margin-top: 20px;
+        }
+
+        /* Reading Text Container */
+        #reading-text-container {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: left;
+            line-height: 1.8;
+            background-color: #fdfdfd;
+        }
+        
+        #reading-text-container h3 {
+            text-align: center;
+            margin-top: 0;
+            color: var(--primary-color);
+        }
+        
+        #reading-text-container p {
+            margin-bottom: 15px;
+            color: var(--text-color);
+            text-align: justify;
+        }
+
+        #start-button, .restart-button {
+            background-color: var(--primary-color);
+            color: var(--white);
+            border: none;
+            padding: 15px 35px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        #start-button:hover, .restart-button:hover {
+            background-color: #357ABD;
+            transform: translateY(-2px);
+        }
+
+        #quiz-screen {
+            display: none;
+            width: 100%;
+        }
+        
+        #quiz-layout {
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+        }
+        
+        /* Left side: Reading text */
+        #quiz-reading-panel {
+            flex-basis: 50%;
+            padding: 20px 30px;
+            overflow-y: auto;
+            max-height: 80vh; /* Make text scrollable if long */
+            text-align: left;
+            line-height: 1.7;
+            border-right: 2px solid #f0f0f0;
+            box-sizing: border-box;
+            background-color: #fafafa;
+        }
+        
+        #quiz-reading-panel h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+            text-align: center;
+        }
+        
+        /* Right side: Questions */
+        #quiz-question-panel {
+            flex-basis: 50%;
+            padding: 20px 30px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #header {
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        #header div {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+        #score {
+            color: var(--primary-color);
+        }
+
+        #question-container {
+            width: 100%;
+        }
+
+        #question-text {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            min-height: 60px;
+            line-height: 1.5;
+        }
+
+        #timer {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 20px;
+            border: 4px solid var(--primary-color);
+            transition: all 0.3s;
+        }
+
+        #timer.warning {
+            color: var(--incorrect-color);
+            border-color: var(--incorrect-color);
+        }
+
+        #options-grid {
+            display: grid;
+            grid-template-columns: 1fr; /* Single column for reading Qs */
+            gap: 12px;
+            margin-top: 20px;
+        }
+        
+        #long-answer-container {
+            display: none;
+            margin-top: 20px;
+        }
+        
+        #long-answer-input {
+            width: 95%;
+            height: 100px;
+            font-size: 1rem;
+            font-family: 'Noto Sans TC', sans-serif;
+            padding: 10px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+        }
+        
+        #submit-long-answer {
+            background-color: var(--secondary-color);
+            color: var(--white);
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        
+        #submit-long-answer:hover {
+            background-color: #40B89F;
+            transform: translateY(-2px);
+        }
+        
+        #submit-long-answer:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .option-button {
+            background-color: var(--white);
+            border: 2px solid var(--border-color);
+            color: var(--text-color);
+            padding: 18px;
+            font-size: 1rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+        }
+
+        .option-button:hover:not(:disabled) {
+            background-color: #f0f5ff;
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .option-button.correct {
+            background-color: var(--correct-color);
+            border-color: var(--correct-color);
+            color: var(--white);
+        }
+
+        .option-button.incorrect {
+            background-color: var(--incorrect-color);
+            border-color: var(--incorrect-color);
+            color: var(--white);
+        }
+
+        .option-button:disabled {
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+
+        #feedback-container {
+            margin-top: 20px;
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #feedback {
+            font-size: 1.2rem;
+            font-weight: 700;
+            text-align: center;
+            padding: 0 10px;
+        }
+        
+        #feedback-answer {
+            font-size: 1rem;
+            font-weight: 400;
+            color: #555;
+            margin-top: 10px;
+            text-align: left;
+            padding: 0 10px;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        #next-button {
+            background-color: var(--secondary-color);
+            color: var(--white);
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+            display: none;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        #next-button:hover {
+            background-color: #40B89F;
+            transform: translateY(-2px);
+        }
+
+        #end-screen {
+            display: none;
+        }
+
+        #final-score {
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            font-weight: 700;
+        }
+        
+        /* Responsive layout for mobile */
+        @media (max-width: 768px) {
+            #quiz-layout {
+                flex-direction: column;
+            }
+            #quiz-reading-panel {
+                flex-basis: auto;
+                max-height: 300px; /* Smaller height on mobile */
+                border-right: none;
+                border-bottom: 2px solid #f0f0f0;
+                padding: 15px;
+            }
+            #quiz-question-panel {
+                flex-basis: auto;
+                padding: 20px 15px;
+            }
+            #header {
+                padding-bottom: 15px;
+                margin-bottom: 15px;
+            }
+            #question-text {
+                font-size: 1.2rem;
+            }
+            #game-container {
+                padding: 15px;
+            }
+            #start-screen, #end-screen {
+                padding: 30px 20px;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+
+        <div id="start-screen">
+            <h1>閱讀挑戰</h1>
+            <h2>《一碗水》</h2>
+            <p>請閱讀以下文章，然後開始挑戰。</p>
+            
+            <div id="reading-text-container">
+                <h3>一碗水</h3>
+                <p>① 我們村後是密密的樹林。</p>
+                <p>② 陽光透過樹蔭,照亮爬滿石壁的過山藤,照亮石壁上潮濕的苔蘚。石壁下有一眼很小很小的泉水,叫「一碗水」。</p>
+                <p>③ 這眼從石縫裏滲出來的泉水雖然小到只有一碗,可是一年到頭都不會乾涸。有趣的是,它總是滿滿的一碗,既不淺下去,也不漫出來。你可以一口氣把它喝乾,它呢,又會不緊不慢地滲出來,滲得滿滿的。</p>
+                <p>④ 小小的泉水雖然只有一碗,可是我們喜歡它。我們上山砍柴或者拾菌, 一定到這裏來歇息、喝水。我們來到樹蔭下,坐在石墩上,吃著各自帶來的晌飯:粑粑、團飯,或者架起柴來燒洋芋.......你吃一點我的,我吃一點他的, 樹葉捲成的「杯子」裏盛滿清清的泉水,我們像大人一樣舉杯高呼:「乾杯!」</p>
+                <p>⑤ 有時候,我們看見小松鼠來喝水,看見山鵲來喝水,看見一群竹雞來喝水 ........你信不信,連蝴蝶、蜜蜂也會來喝水!我們躲得遠遠的,不驚動這些樹林裏的小主人。</p>
+                <p>⑥ 你看,小松鼠豎著毛茸茸的尾巴,小眼睛那麼亮!牠喝了一口水,很快地用腳爪揩揩嘴,「吱吱」,牠說,「好甜的水,好甜的水!」。</p>
+                <p>⑦ 山喜鵲飛來的時候,愛在那棵青松上停一停。有一隻先飛下來,「快,快來呀!」牠在招呼同伴,大家都飛下來了,牠們在水邊跳躍著,跳躍著,潮濕的沙地上,留下牠們的爪印。</p>
+                <p>⑧ 喲,在潮濕的沙地上,有很多很多的爪印,有的像竹葉,有的像梅花......</p>
+                <p>⑨ 這一碗水,老人們說它是一眼靈泉。難怪鳥兒們喝了它的水,唱得那麼動聽;小松鼠喝了它的水,顯得那麼機靈;村裏的孩子喝了它的水,一個個是那樣的聰明。</p>
+                <p>⑩ 啊,它是大山的甘露,它的水真甜!</p>
+            </div>
+            
+            <p class="credits">感謝 @Fox Fish 和 @Melon Rex 建議此閱讀理解題目。</p>
+            <p class="credits">資料來源：HKEDCITY 費安娜老師</p>
+
+            <button id="start-button">開始挑戰</button>
+        </div>
+
+        <div id="quiz-screen">
+            <div id="quiz-layout">
+                
+                <div id="quiz-reading-panel">
+                    <h3>一碗水</h3>
+                    <p>① 我們村後是密密的樹林。</p>
+                    <p>② 陽光透過樹蔭,照亮爬滿石壁的過山藤,照亮石壁上潮濕的苔蘚。石壁下有一眼很小很小的泉水,叫「一碗水」。</p>
+                    <p>③ 這眼從石縫裏滲出來的泉水雖然小到只有一碗,可是一年到頭都不會乾涸。有趣的是,它總是滿滿的一碗,既不淺下去,也不漫出來。你可以一口氣把它喝乾,它呢,又會不緊不慢地滲出來,滲得滿滿的。</p>
+                    <p>④ 小小的泉水雖然只有一碗,可是我們喜歡它。我們上山砍柴或者拾菌, 一定到這裏來歇息、喝水。我們來到樹蔭下,坐在石墩上,吃著各自帶來的晌飯:粑粑、團飯,或者架起柴來燒洋芋.......你吃一點我的,我吃一點他的, 樹葉捲成的「杯子」裏盛滿清清的泉水,我們像大人一樣舉杯高呼:「乾杯!」</p>
+                    <p>⑤ 有時候,我們看見小松鼠來喝水,看見山鵲來喝水,看見一群竹雞來喝水 ........你信不信,連蝴蝶、蜜蜂也會來喝水!我們躲得遠遠的,不驚動這些樹林裏的小主人。</p>
+                    <p>⑥ 你看,小松鼠豎著毛茸茸的尾巴,小眼睛那麼亮!牠喝了一口水,很快地用腳爪揩揩嘴,「吱吱」,牠說,「好甜的水,好甜的水!」。</p>
+                    <p>⑦ 山喜鵲飛來的時候,愛在那棵青松上停一停。有一隻先飛下來,「快,快來呀!」牠在招呼同伴,大家都飛下來了,牠們在水邊跳躍著,跳躍著,潮濕的沙地上,留下牠們的爪印。</p>
+                    <p>⑧ 喲,在潮濕的沙地上,有很多很多的爪印,有的像竹葉,有的像梅花......</p>
+                    <p>⑨ 這一碗水,老人們說它是一眼靈泉。難怪鳥兒們喝了它的水,唱得那麼動聽;小松鼠喝了它的水,顯得那麼機靈;村裏的孩子喝了它的水,一個個是那樣的聰明。</p>
+                    <p>⑩ 啊,它是大山的甘露,它的水真甜!</p>
+                </div>
+                
+                <div id="quiz-question-panel">
+                    <div id="header">
+                        <div id="question-counter">Question 1 / X</div>
+                        <div id="score">Score: 0 / X</div>
+                    </div>
+                    <div id="question-container">
+                        <div id="timer">30</div>
+                        <div id="question-text">Question goes here...</div>
+                        
+                        <div id="options-grid">
+                            </div>
+                        
+                        <div id="long-answer-container">
+                            <textarea id="long-answer-input" placeholder="請輸入答案..."></textarea>
+                            <button id="submit-long-answer">提交</button>
+                        </div>
+                        
+                        <div id="feedback-container">
+                            <div id="feedback"></div>
+                            <div id="feedback-answer"></div> 
+                            <button id="next-button">下一題</button>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+
+        <div id="end-screen">
+            <h1>挑戰完成!</h1>
+            <div id="final-score">Your total score: 0 / 0</div>
+            <p>多多練習，精益求精!</p>
+            <button class="restart-button">再試一次</button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- COOKIE HELPER FUNCTIONS ---
+        function setCookie(name, value, days) {
+            let expires = "";
+            if (days) {
+                const date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + (value || "") + expires + "; path=/; SameSite=Lax";
+        }
+
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+
+        // --- QUESTIONS (Sourced from bowlwater.html) ---
+        const allQuestions = [
+            // Q1 (MCQ)
+            { 
+                time: 20, 
+                question: "文中提到的泉水叫什麼名字?", 
+                correctAnswer: "一碗水", 
+                incorrectAnswers: ["密密的樹林", "過山藤", "石壁"]
+            },
+            // Q2 (MCQ)
+            { 
+                time: 20, 
+                question: "根據第③段,「一碗水」的泉水有什麼有趣的地方?", 
+                correctAnswer: "總是滿滿一碗,既不淺也不漫出", 
+                incorrectAnswers: ["冬天會乾涸", "只有下雨後才會滿", "像小河一樣流動"]
+            },
+            // Q3 (Long Answer)
+            { 
+                time: 60, 
+                type: "long",
+                question: "根據第③段,簡要寫出「一碗水」的特點。", 
+                // Template Logic: User needs ALL keys in 'fullMarkKeys' for 2 points, OR any key in 'partialMarkKeys' for 1 point.
+                fullMarkKeys: ["不乾涸", "滿滿"], 
+                partialMarkKeys: ["一年到頭", "不乾涸", "滿滿", "一碗"], 
+                feedback: "參考答案 (2分): 泉水很小,但一年到頭都不會乾涸,而且總是滿滿的一碗,既不淺下去,也不漫出來。"
+            },
+            // Q4 (MCQ)
+            { 
+                time: 20, 
+                question: "根據第⑤段,「樹林裏的小主人」指的是誰?", 
+                correctAnswer: "小松鼠、山鵲等小動物", 
+                incorrectAnswers: ["我們 (村裏的孩子)", "老人們", "密密的樹林"]
+            },
+            // Q5 (MCQ)
+            { 
+                time: 30, 
+                question: "找出第④段的中心句 (Topic Sentence)。", 
+                correctAnswer: "小小的泉水雖然只有一碗,可是我們喜歡它。", 
+                incorrectAnswers: ["我們上山砍柴或者拾菌, 一定到這裏來歇息、喝水。", "我們來到樹蔭下,坐在石墩上,吃著各自帶來的晌飯...", "我們像大人一樣舉杯高呼:「乾杯!」"]
+            },
+            // Q6 (MCQ)
+            { 
+                time: 20, 
+                question: "文章的結構中,描述「我們孩子」喜歡泉水的內容是從哪一段開始的?", 
+                correctAnswer: "第④段", 
+                incorrectAnswers: ["第②段", "第③段", "第⑤段"]
+            },
+            // Q7 (MCQ)
+            { 
+                time: 20, 
+                question: "文章的哪幾段集中描寫「小動物」也來泉邊喝水?", 
+                correctAnswer: "第⑤至⑧段", 
+                incorrectAnswers: ["第①至③段", "第④段", "第⑨至⑩段"]
+            },
+            // Q8 (Long Answer)
+            { 
+                time: 45, 
+                type: "long",
+                question: "綜合第⑨至⑩段,作者認為「一碗水」是怎樣的泉水?", 
+                fullMarkKeys: ["靈泉", "甘露"], 
+                partialMarkKeys: ["靈泉", "甘露", "真甜"], 
+                feedback: "參考答案 (2分): 作者認為它是一眼「靈泉」,是大山的「甘露」,水非常甜。"
+            },
+            // Q9 (Long Answer)
+            { 
+                time: 60, 
+                type: "long",
+                question: "試寫出本文的中心思想。", 
+                fullMarkKeys: ["喜愛", "大自然"], 
+                partialMarkKeys: ["喜愛", "熱愛", "動物", "自然"], 
+                feedback: "參考答案 (2分): 通過描寫人們及小動物都喜歡「一碗水」,抒發作者對它的喜愛及對大自然的熱愛之情。"
+            }
+        ];
+        
+        // ----------------------------------------------------
+        // (GAME LOGIC) - Standard Template Logic
+        // ----------------------------------------------------
+        
+        // DOM 
+        const startScreen = document.getElementById('start-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const endScreen = document.getElementById('end-screen');
+        const startButton = document.getElementById('start-button');
+        const restartButtons = document.querySelectorAll('.restart-button');
+        const questionCounter = document.getElementById('question-counter');
+        const timerDisplay = document.getElementById('timer');
+        const scoreDisplay = document.getElementById('score');
+        const questionText = document.getElementById('question-text');
+        const optionsGrid = document.getElementById('options-grid');
+        const feedback = document.getElementById('feedback');
+        const feedbackAnswer = document.getElementById('feedback-answer');
+        const nextButton = document.getElementById('next-button');
+        const finalScore = document.getElementById('final-score');
+        
+        const longAnswerContainer = document.getElementById('long-answer-container');
+        const longAnswerInput = document.getElementById('long-answer-input');
+        const submitLongAnswer = document.getElementById('submit-long-answer');
+        
+        const readingTextContainer = document.getElementById('reading-text-container');
+        
+        // Calculate Total Score Dynamically
+        const TOTAL_SCORE = allQuestions.length * 2; 
+
+        // VARS
+        let currentGameQuestions = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let timer;
+        let timeLeft = 30;
+
+        function shuffleArray(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex != 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        function startGame() {
+            // Note: For reading comprehension, we usually DON'T shuffle questions 
+            // so they follow the text flow. However, the template defaults to shuffle.
+            // I will remove the shuffle for the question ORDER, but keep it for options.
+            currentGameQuestions = [...allQuestions]; 
+            
+            currentQuestionIndex = 0;
+            score = 0;
+            startScreen.style.display = 'none';
+            endScreen.style.display = 'none';
+            quizScreen.style.display = 'block';
+            quizScreen.style.display = 'flex'; 
+            
+            scoreDisplay.textContent = `Score: 0 / ${TOTAL_SCORE}`;
+            
+            showQuestion();
+        }
+
+        function showQuestion() {
+            resetQuestionState();
+            const question = currentGameQuestions[currentQuestionIndex];
+            
+            questionText.textContent = question.question;
+            questionCounter.textContent = `Question ${currentQuestionIndex + 1} / ${currentGameQuestions.length}`;
+            
+            timeLeft = question.time || 30;
+            timerDisplay.textContent = timeLeft;
+            
+            if (question.type === "long") {
+                optionsGrid.style.display = 'none';
+                longAnswerContainer.style.display = 'block';
+                longAnswerInput.value = '';
+                submitLongAnswer.onclick = submitLongAnswerHandler; 
+            } else {
+                optionsGrid.style.display = 'grid';
+                longAnswerContainer.style.display = 'none';
+                
+                let options = [question.correctAnswer, ...question.incorrectAnswers];
+                const shuffledOptions = shuffleArray([...options]);
+                
+                optionsGrid.innerHTML = '';
+                optionsGrid.style.gridTemplateColumns = '1fr';
+
+                shuffledOptions.forEach(option => {
+                    const button = document.createElement('button');
+                    button.textContent = option;
+                    button.classList.add('option-button');
+                    button.onclick = selectMCQAnswer; 
+                    optionsGrid.appendChild(button);
+                });
+            }
+            
+            startTimer();
+        }
+
+        function resetQuestionState() {
+            feedback.textContent = '';
+            feedbackAnswer.textContent = '';
+            nextButton.style.display = 'none';
+            timerDisplay.classList.remove('warning');
+            timerDisplay.style.borderColor = "var(--primary-color)";
+            timerDisplay.style.color = "var(--primary-color)";
+            
+            optionsGrid.style.display = 'none';
+            longAnswerContainer.style.display = 'none';
+            
+            document.querySelectorAll('.option-button').forEach(button => {
+                button.disabled = false;
+                button.onclick = null;
+            });
+            longAnswerInput.disabled = false;
+            submitLongAnswer.disabled = false;
+            submitLongAnswer.onclick = null;
+        }
+
+        function startTimer() {
+            timer = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = timeLeft;
+                if (timeLeft <= 5) {
+                    timerDisplay.classList.add('warning');
+                }
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    timeUp();
+                }
+            }, 1000);
+        }
+
+        function timeUp() {
+            clearInterval(timer);
+            feedback.textContent = "時間到! 0分";
+            feedback.style.color = "var(--warning-color)";
+            
+            const question = currentGameQuestions[currentQuestionIndex];
+            if (question.type === "long") {
+                feedbackAnswer.textContent = question.feedback; 
+            }
+            
+            disableOptions();
+            showCorrectAnswer();
+            nextButton.style.display = 'block';
+        }
+
+        function selectMCQAnswer(e) {
+            clearInterval(timer);
+            const selectedButton = e.target;
+            const selectedAnswer = selectedButton.textContent;
+            const correctAnswer = currentGameQuestions[currentQuestionIndex].correctAnswer;
+
+            disableOptions();
+
+            if (selectedAnswer === correctAnswer) {
+                score += 2;
+                scoreDisplay.textContent = `Score: ${score} / ${TOTAL_SCORE}`;
+                feedback.textContent = "正確! +2分";
+                feedback.style.color = "var(--correct-color)";
+                selectedButton.classList.add('correct');
+            } else {
+                feedback.textContent = "不正確. 0分";
+                feedback.style.color = "var(--incorrect-color)";
+                selectedButton.classList.add('incorrect');
+                showCorrectAnswer();
+            }
+            
+            nextButton.style.display = 'block';
+        }
+        
+        function submitLongAnswerHandler() {
+            clearInterval(timer);
+            const userAnswer = longAnswerInput.value;
+            const question = currentGameQuestions[currentQuestionIndex];
+            
+            disableOptions();
+
+            let fullMarkMatchCount = 0;
+            for (const key of question.fullMarkKeys) {
+                if (userAnswer.includes(key)) {
+                    fullMarkMatchCount++;
+                }
+            }
+
+            if (fullMarkMatchCount >= question.fullMarkKeys.length) {
+                score += 2;
+                scoreDisplay.textContent = `Score: ${score} / ${TOTAL_SCORE}`;
+                feedback.textContent = "完全正確! +2分";
+                feedback.style.color = "var(--correct-color)";
+            } else {
+                let partialMarkMatchCount = 0;
+                // Check if partial keys exist (fallback)
+                if(question.partialMarkKeys) {
+                    for (const key of question.partialMarkKeys) {
+                        if (userAnswer.includes(key)) {
+                            partialMarkMatchCount++;
+                            break; // Just need one for partial credit
+                        }
+                    }
+                }
+
+                if (fullMarkMatchCount > 0 || partialMarkMatchCount > 0) {
+                    score += 1;
+                    scoreDisplay.textContent = `Score: ${score} / ${TOTAL_SCORE}`;
+                    feedback.textContent = "部分正確 +1分";
+                    feedback.style.color = "var(--warning-color)";
+                } else {
+                    feedback.textContent = "不正確. 0分";
+                    feedback.style.color = "var(--incorrect-color)";
+                }
+            }
+            
+            feedbackAnswer.textContent = question.feedback; 
+            nextButton.style.display = 'block';
+        }
+
+        function showCorrectAnswer() {
+             const question = currentGameQuestions[currentQuestionIndex];
+             if (question.type !== "long") {
+                const correctAnswer = question.correctAnswer;
+                document.querySelectorAll('.option-button').forEach(button => {
+                    if (button.textContent === correctAnswer) {
+                        button.classList.add('correct');
+                    }
+                });
+             }
+        }
+
+        function disableOptions() {
+            document.querySelectorAll('.option-button').forEach(button => {
+                button.disabled = true;
+                button.onclick = null;
+            });
+            longAnswerInput.disabled = true;
+            submitLongAnswer.disabled = true;
+            submitLongAnswer.onclick = null;
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < currentGameQuestions.length) {
+                showQuestion();
+            } else {
+                showEndScreen();
+            }
+        }
+
+        function showEndScreen() {
+            quizScreen.style.display = 'none';
+            endScreen.style.display = 'block';
+            finalScore.textContent = `你的總分: ${score} / ${TOTAL_SCORE}`;
+            
+            // --- COOKIE LOGIC ---
+            const oldScoreStr = getCookie("score");
+            const oldScore = parseInt(oldScoreStr || "0", 10);
+            const newTotalScore = oldScore + score; 
+            setCookie("score", newTotalScore, 3650);
+            console.log(`Score Updated: ${oldScore} + ${score} = ${newTotalScore}`);
+            
+            // Ensure text container is visible if needed, or just leave start screen hidden
+        }
+
+        startButton.addEventListener('click', startGame);
+        nextButton.addEventListener('click', nextQuestion);
+        restartButtons.forEach(button => button.addEventListener('click', startGame));
+        
+    </script>
+</body>
+</html>

@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reproductive System Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Interactive Elements */
+        .interactive-part {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .interactive-part:hover {
+            filter: brightness(1.1) drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+        }
+        .interactive-part.active {
+            filter: brightness(1.2) drop-shadow(0 0 8px rgba(56, 189, 248, 0.6));
+            stroke: #0284c7; /* sky-600 */
+            stroke-width: 3;
+        }
+
+        /* Invisible Hit Zones for better mobile tapping */
+        .hit-zone {
+            fill: none;
+            stroke: transparent;
+            stroke-width: 25px; /* Generous touch area */
+            cursor: pointer;
+        }
+        
+        /* Filled Hit Zones */
+        .hit-zone-fill {
+            fill: transparent;
+            stroke: none;
+            cursor: pointer;
+        }
+
+        /* Gradients */
+        .grad-male-organ { fill: url(#grad-male); }
+        .grad-female-organ { fill: url(#grad-female); }
+        
+        /* Smooth Fade */
+        .fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-800 font-sans pb-12">
+
+    <!-- Navbar -->
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-3">
+            <div class="flex items-center gap-2 self-start md:self-auto">
+                <div class="bg-indigo-600 text-white p-2 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21.36 5.54 13.44a6.5 6.5 0 1 1 12.92 0L12 21.36Z"/></svg>
+                </div>
+                <h1 class="text-lg font-bold text-slate-800">Reproduction Explorer</h1>
+            </div>
+            
+            <div class="flex bg-slate-100 p-1 rounded-lg overflow-x-auto w-full md:w-auto scrollbar-hide">
+                <button onclick="switchTab('cells')" id="tab-cells" class="whitespace-nowrap flex-1 md:flex-none px-3 py-2 rounded-md text-xs md:text-sm font-semibold transition-all text-slate-500 hover:text-slate-700">Sex Cells</button>
+                <button onclick="switchTab('male')" id="tab-male" class="whitespace-nowrap flex-1 md:flex-none px-3 py-2 rounded-md text-xs md:text-sm font-semibold transition-all bg-white text-indigo-600 shadow-sm">Male</button>
+                <button onclick="switchTab('female')" id="tab-female" class="whitespace-nowrap flex-1 md:flex-none px-3 py-2 rounded-md text-xs md:text-sm font-semibold transition-all text-slate-500 hover:text-slate-700">Female</button>
+                <button onclick="switchTab('process')" id="tab-process" class="whitespace-nowrap flex-1 md:flex-none px-3 py-2 rounded-md text-xs md:text-sm font-semibold transition-all text-slate-500 hover:text-slate-700">Fertilization</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto px-4 py-6">
+
+        <!-- CONTENT AREA -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- LEFT COLUMN: DIAGRAMS -->
+            <div class="lg:col-span-7 flex flex-col items-center relative z-10">
+                <div class="bg-white p-2 md:p-4 rounded-3xl shadow-lg border border-slate-200 w-full max-w-[500px] aspect-square relative overflow-hidden bg-slate-50">
+                    
+                    <!-- SEX CELLS VIEW -->
+                    <div id="diagram-cells" class="w-full h-full hidden">
+                        <svg viewBox="0 0 400 400" class="w-full h-full">
+                            <text x="50%" y="30" text-anchor="middle" class="text-xs fill-slate-500 font-bold uppercase tracking-widest">Sex Cells Comparison</text>
+                            <line x1="200" y1="50" x2="200" y2="350" stroke="#cbd5e1" stroke-dasharray="4 4" />
+                            <g id="cell-sperm" class="interactive-part" onclick="selectPart('cells', 'sperm')">
+                                <rect x="0" y="50" width="200" height="300" fill="transparent" />
+                                <text x="100" y="80" text-anchor="middle" class="text-sm font-bold fill-blue-600">Sperm</text>
+                                <text x="100" y="95" text-anchor="middle" class="text-xs fill-slate-400">(Male Sex Cell)</text>
+                                <g transform="translate(60, 180) rotate(-45)">
+                                    <path d="M 40 15 Q 100 15 140 40" fill="none" stroke="#3b82f6" stroke-width="2" />
+                                    <ellipse cx="30" cy="15" rx="20" ry="12" fill="#93c5fd" stroke="#2563eb" stroke-width="2"/>
+                                    <circle cx="25" cy="15" r="5" fill="#1e3a8a"/>
+                                </g>
+                                <text x="100" y="320" text-anchor="middle" class="text-xs fill-slate-500">Size: ~0.05 mm</text>
+                            </g>
+                            <g id="cell-ovum" class="interactive-part" onclick="selectPart('cells', 'ovum')">
+                                <rect x="200" y="50" width="200" height="300" fill="transparent" />
+                                <text x="300" y="80" text-anchor="middle" class="text-sm font-bold fill-pink-600">Ovum</text>
+                                <text x="300" y="95" text-anchor="middle" class="text-xs fill-slate-400">(Female Sex Cell)</text>
+                                <g transform="translate(250, 150)">
+                                    <circle cx="50" cy="50" r="45" fill="#fce7f3" stroke="#f472b6" stroke-width="2" stroke-dasharray="2 2"/>
+                                    <circle cx="50" cy="50" r="35" fill="#fbcfe8" stroke="#db2777" stroke-width="2"/>
+                                    <circle cx="50" cy="50" r="10" fill="#be185d"/>
+                                    <text x="50" y="30" text-anchor="middle" font-size="8" fill="#be185d">Nucleus</text>
+                                    <text x="50" y="70" text-anchor="middle" font-size="8" fill="#db2777">Cytoplasm</text>
+                                </g>
+                                <text x="300" y="270" text-anchor="middle" class="text-xs fill-slate-500 font-size-10">Jelly Coat</text>
+                                <text x="300" y="320" text-anchor="middle" class="text-xs fill-slate-500">Size: ~0.1 mm</text>
+                            </g>
+                        </svg>
+                    </div>
+
+                    <!-- MALE SYSTEM CONTAINER -->
+                    <div id="diagram-male" class="w-full h-full relative">
+                        <div class="absolute top-2 right-2 bg-white/90 backdrop-blur rounded-xl p-1.5 flex gap-1 z-20 border border-slate-200 shadow-md">
+                            <button onclick="switchMaleView('side')" id="btn-side" class="px-4 py-2 text-xs font-bold rounded-lg bg-indigo-100 text-indigo-700 shadow-sm transition-all">Side View</button>
+                            <button onclick="switchMaleView('front')" id="btn-front" class="px-4 py-2 text-xs font-bold rounded-lg text-slate-500 hover:bg-slate-100 transition-all">Front View</button>
+                        </div>
+
+                        <!-- MALE SIDE VIEW SVG -->
+                        <div id="male-view-side" class="w-full h-full">
+                            <svg viewBox="0 0 400 400" class="w-full h-full">
+                                <defs>
+                                    <linearGradient id="grad-male" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" style="stop-color:#93c5fd;stop-opacity:1" /> 
+                                        <stop offset="100%" style="stop-color:#60a5fa;stop-opacity:1" /> 
+                                    </linearGradient>
+                                    <linearGradient id="grad-skin" x1="0%" y1="0%" x2="0%" y2="100%">
+                                        <stop offset="0%" style="stop-color:#fecaca;stop-opacity:1" /> 
+                                        <stop offset="100%" style="stop-color:#f87171;stop-opacity:1" /> 
+                                    </linearGradient>
+                                </defs>
+                                <text x="50%" y="30" text-anchor="middle" class="text-xs fill-slate-500 font-bold uppercase tracking-widest">Male Reproductive System</text>
+                                <path d="M 50 80 C 50 80, 70 350, 140 380 L 260 380 L 260 80" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="2"/>
+                                <path d="M 160 110 A 40 40 0 0 1 240 110 L 200 150 Z" fill="#e0f2fe" stroke="#bae6fd" stroke-width="2" stroke-dasharray="4 2"/>
+                                <text x="200" y="100" text-anchor="middle" class="text-xs fill-slate-400">Bladder</text>
+                                <path d="M 160 260 C 160 200, 130 150, 200 150" fill="none" class="interactive-part" stroke="#3b82f6" stroke-width="4" stroke-linecap="round" onclick="selectPart('male', 'duct')" />
+                                <circle cx="200" cy="170" r="20" class="interactive-part" fill="url(#grad-male)" stroke="#3b82f6" onclick="selectPart('male', 'gland')" />
+                                <path d="M 125 250 C 110 340, 210 340, 195 250" fill="url(#grad-skin)" opacity="0.4" stroke="#f87171" stroke-width="2" class="interactive-part" onclick="selectPart('male', 'scrotum')"/>
+                                <ellipse cx="160" cy="280" rx="28" ry="38" class="interactive-part" fill="url(#grad-male)" stroke="#3b82f6" onclick="selectPart('male', 'testis')" />
+                                <g class="interactive-part" onclick="selectPart('male', 'penis')">
+                                    <path d="M 190 180 L 190 270 C 190 310, 260 310, 260 270 C 260 250, 220 250, 215 240 L 215 180" fill="url(#grad-skin)" stroke="#f87171" stroke-width="2" />
+                                </g>
+                                <path d="M 200 150 L 200 270 C 200 280, 250 280, 250 270" fill="none" stroke="#fca5a5" stroke-width="3" stroke-linecap="round" class="interactive-part" onclick="selectPart('male', 'urethra')"/>
+                                <path d="M 160 260 C 160 200, 130 150, 200 150" class="hit-zone" onclick="selectPart('male', 'duct')" />
+                                <path d="M 200 150 L 200 270 C 200 280, 250 280, 250 270" class="hit-zone" onclick="selectPart('male', 'urethra')" style="stroke-width: 15px;"/>
+                                <circle cx="200" cy="170" r="30" class="hit-zone-fill" onclick="selectPart('male', 'gland')" />
+                                <ellipse cx="160" cy="280" rx="35" ry="45" class="hit-zone-fill" onclick="selectPart('male', 'testis')" />
+                            </svg>
+                        </div>
+
+                        <!-- MALE FRONT VIEW SVG -->
+                        <div id="male-view-front" class="w-full h-full hidden">
+                            <svg viewBox="0 0 400 400" class="w-full h-full">
+                                <text x="50%" y="30" text-anchor="middle" class="text-xs fill-slate-500 font-bold uppercase tracking-widest">Male Reproductive System</text>
+
+                                <!-- VISUALS BOTTOM LAYER -->
+                                <ellipse cx="200" cy="100" rx="60" ry="40" fill="#e0f2fe" stroke="#bae6fd" stroke-width="2" stroke-dasharray="4 2"/>
+                                <text x="200" y="100" text-anchor="middle" class="text-xs fill-slate-400">Bladder</text>
+                                
+                                <path d="M 230 280 C 240 220, 280 180, 260 140 C 240 100, 220 120, 200 150" fill="none" stroke="#3b82f6" stroke-width="4" stroke-linecap="round" />
+                                <path d="M 170 280 C 160 220, 120 180, 140 140 C 160 100, 180 120, 200 150" fill="none" stroke="#3b82f6" stroke-width="4" stroke-linecap="round" />
+                                <circle cx="200" cy="165" r="25" fill="url(#grad-male)" stroke="#3b82f6" />
+                                
+                                <!-- Scrotum Visuals -->
+                                <path d="M 140 250 Q 120 340 170 340 Q 180 300 170 250" fill="url(#grad-skin)" opacity="0.3" stroke="#f87171" />
+                                <path d="M 260 250 Q 280 340 230 340 Q 220 300 230 250" fill="url(#grad-skin)" opacity="0.3" stroke="#f87171" />
+                                
+                                <path d="M 180 180 L 180 280 C 180 310, 220 310, 220 280 L 220 180" fill="url(#grad-skin)" stroke="#f87171" stroke-width="2" />
+                                <line x1="200" y1="190" x2="200" y2="290" stroke="#fca5a5" stroke-width="3" stroke-linecap="round" />
+                                
+                                <ellipse cx="155" cy="300" rx="22" ry="28" fill="url(#grad-male)" stroke="#3b82f6" />
+                                <ellipse cx="245" cy="300" rx="22" ry="28" fill="url(#grad-male)" stroke="#3b82f6" />
+
+
+                                <!-- HIT ZONES TOP LAYER (ORDER MATTERS) -->
+                                
+                                <!-- 1. Penis Shaft (Wide Base) -->
+                                <path d="M 180 180 L 180 280 C 180 310, 220 310, 220 280 L 220 180" class="hit-zone" style="stroke-width: 45px;" onclick="selectPart('male', 'penis')" />
+
+                                <!-- 2. Scrotum (Wide Base Area) -->
+                                <path d="M 140 250 Q 120 340 170 340 Q 180 300 170 250" class="hit-zone-fill" onclick="selectPart('male', 'scrotum')" />
+                                <path d="M 260 250 Q 280 340 230 340 Q 220 300 230 250" class="hit-zone-fill" onclick="selectPart('male', 'scrotum')" />
+                                
+                                <!-- 3. Urethra (On top of Penis, Center Strip) -->
+                                <line x1="200" y1="190" x2="200" y2="300" class="hit-zone" style="stroke-width: 25px;" onclick="selectPart('male', 'urethra')" />
+                                
+                                <!-- 4. Testes (On top of Scrotum) -->
+                                <ellipse cx="155" cy="300" rx="25" ry="32" class="hit-zone-fill" onclick="selectPart('male', 'testis')" />
+                                <ellipse cx="245" cy="300" rx="25" ry="32" class="hit-zone-fill" onclick="selectPart('male', 'testis')" />
+
+                                <!-- 5. Sex Gland (On top of ducts) -->
+                                <circle cx="200" cy="165" r="30" class="hit-zone-fill" onclick="selectPart('male', 'gland')" />
+                                
+                                <!-- 6. Ducts (Top, but avoiding gland area) -->
+                                <path d="M 230 280 C 240 220, 280 180, 260 140 C 240 100, 220 120, 215 135" class="hit-zone" onclick="selectPart('male', 'duct')" />
+                                <path d="M 170 280 C 160 220, 120 180, 140 140 C 160 100, 180 120, 185 135" class="hit-zone" onclick="selectPart('male', 'duct')" />
+
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- FEMALE SYSTEM SVG -->
+                    <div id="diagram-female" class="w-full h-full hidden">
+                         <svg viewBox="0 0 400 400" class="w-full h-full">
+                            <defs>
+                                <linearGradient id="grad-female" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#fbcfe8;stop-opacity:1" /> <!-- pink-200 -->
+                                    <stop offset="100%" style="stop-color:#f472b6;stop-opacity:1" /> <!-- pink-400 -->
+                                </linearGradient>
+                            </defs>
+                            <text x="50%" y="30" text-anchor="middle" class="text-xs fill-slate-500 font-bold uppercase tracking-widest">Female Reproductive System</text>
+                            <path d="M 150 150 C 120 120, 70 130, 60 180" fill="none" stroke="url(#grad-female)" stroke-width="10" stroke-linecap="round" id="female-tubes-l" class="interactive-part" onclick="selectPart('female', 'oviduct')"/>
+                            <path d="M 250 150 C 280 120, 330 130, 340 180" fill="none" stroke="url(#grad-female)" stroke-width="10" stroke-linecap="round" id="female-tubes-r" class="interactive-part" onclick="selectPart('female', 'oviduct')"/>
+                            <ellipse cx="60" cy="200" rx="22" ry="18" id="female-ovary-l" class="interactive-part" fill="url(#grad-female)" stroke="#ec4899" onclick="selectPart('female', 'ovary')"/>
+                            <ellipse cx="340" cy="200" rx="22" ry="18" id="female-ovary-r" class="interactive-part" fill="url(#grad-female)" stroke="#ec4899" onclick="selectPart('female', 'ovary')"/>
+                            <path d="M 150 150 L 250 150 Q 260 220 230 250 L 170 250 Q 140 220 150 150 Z" id="female-uterus" class="interactive-part" fill="url(#grad-female)" stroke="#ec4899" onclick="selectPart('female', 'uterus')"/>
+                            <path d="M 170 250 L 230 250 L 230 280 L 170 280 Z" id="female-cervix" class="interactive-part" fill="#fce7f3" stroke="#ec4899" onclick="selectPart('female', 'cervix')"/>
+                            <path d="M 180 280 L 220 280 L 220 360 Q 200 370 180 360 Z" id="female-vagina" class="interactive-part" fill="url(#grad-female)" stroke="#ec4899" onclick="selectPart('female', 'vagina')"/>
+                        </svg>
+                    </div>
+
+                    <!-- PROCESS SVG -->
+                    <div id="diagram-process" class="w-full h-full hidden flex items-center justify-center bg-white">
+                        <div class="text-center p-8 w-full">
+                            <div class="relative h-72 w-full bg-slate-50 rounded-2xl border border-slate-200 overflow-hidden mb-6 shadow-inner">
+                                <div id="stage-1" class="process-stage absolute inset-0 flex items-center justify-center flex-col">
+                                    <div class="bg-red-100 p-8 rounded-full mb-4">
+                                        <svg width="120" height="120" viewBox="0 0 100 100" class="overflow-visible">
+                                            <circle cx="50" cy="50" r="40" fill="#fecaca" stroke="#f87171" stroke-width="2"/>
+                                            <circle cx="50" cy="50" r="15" fill="#dc2626" class="animate-ping opacity-75"/>
+                                            <circle cx="50" cy="50" r="15" fill="#dc2626" />
+                                        </svg>
+                                    </div>
+                                    <p class="font-bold text-xl text-red-600">1. Ovulation</p>
+                                </div>
+                                <div id="stage-2" class="process-stage absolute inset-0 hidden flex items-center justify-center flex-col">
+                                    <div class="bg-blue-100 p-8 rounded-full mb-4">
+                                        <svg width="150" height="120" viewBox="0 0 150 100" class="overflow-visible">
+                                            <circle cx="120" cy="50" r="35" fill="#fecaca" stroke="#f87171" stroke-width="2" />
+                                            <g class="sperm-anim"><circle cx="10" cy="50" r="3" fill="#1e3a8a"/><path d="M 10 50 L -10 50" stroke="#1e3a8a" stroke-width="2"/></g>
+                                            <g class="sperm-anim" style="animation-delay: 0.3s"><circle cx="10" cy="65" r="3" fill="#1e3a8a"/><path d="M 10 65 L -10 65" stroke="#1e3a8a" stroke-width="2"/></g>
+                                            <g class="sperm-anim" style="animation-delay: 0.7s"><circle cx="10" cy="35" r="3" fill="#1e3a8a"/><path d="M 10 35 L -10 35" stroke="#1e3a8a" stroke-width="2"/></g>
+                                        </svg>
+                                    </div>
+                                    <p class="font-bold text-xl text-blue-600">2. Fertilization</p>
+                                </div>
+                                <div id="stage-3" class="process-stage absolute inset-0 hidden flex items-center justify-center flex-col">
+                                    <div class="bg-purple-100 p-8 rounded-full mb-4">
+                                        <svg width="120" height="120" viewBox="0 0 100 100" class="overflow-visible">
+                                            <circle cx="50" cy="50" r="40" fill="#e9d5ff" stroke="#a855f7" stroke-width="3"/>
+                                            <line x1="50" y1="15" x2="50" y2="85" stroke="#a855f7" stroke-width="2"/>
+                                            <line x1="15" y1="50" x2="85" y2="50" stroke="#a855f7" stroke-width="2"/>
+                                            <circle cx="32" cy="32" r="8" fill="#6b21a8"/>
+                                            <circle cx="68" cy="68" r="8" fill="#6b21a8"/>
+                                            <circle cx="32" cy="68" r="8" fill="#6b21a8"/>
+                                            <circle cx="68" cy="32" r="8" fill="#6b21a8"/>
+                                        </svg>
+                                    </div>
+                                    <p class="font-bold text-xl text-purple-600">3. Division (Zygote)</p>
+                                </div>
+                            </div>
+                            <div class="flex justify-center gap-2">
+                                <button onclick="setStage(1)" class="w-3 h-3 rounded-full bg-slate-300 hover:bg-slate-500 transition-colors" id="dot-1"></button>
+                                <button onclick="setStage(2)" class="w-3 h-3 rounded-full bg-slate-300 hover:bg-slate-500 transition-colors" id="dot-2"></button>
+                                <button onclick="setStage(3)" class="w-3 h-3 rounded-full bg-slate-300 hover:bg-slate-500 transition-colors" id="dot-3"></button>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-2">Click dots to switch stages</p>
+                        </div>
+                    </div>
+
+                    <div id="hint-overlay" class="absolute bottom-4 right-4 text-xs text-slate-400 italic pointer-events-none">
+                        *Click diagrams to learn more
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: INFO PANEL -->
+            <div class="lg:col-span-5 relative z-10">
+                <div id="info-placeholder" class="h-64 lg:h-full flex flex-col items-center justify-center text-center p-8 bg-white border border-dashed border-slate-300 rounded-2xl">
+                    <div class="p-3 bg-slate-100 rounded-full mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                    </div>
+                    <h3 class="font-semibold text-slate-600">Select a Part</h3>
+                    <p class="text-sm text-slate-400">Click on any organ or cell to understand its function.</p>
+                </div>
+                <div id="info-card" class="hidden bg-white border-l-4 border-indigo-500 shadow-md rounded-r-xl rounded-l-sm p-6 fade-in scroll-mt-24">
+                    <h2 id="info-title" class="text-2xl font-bold text-slate-800 mb-2">Title</h2>
+                    <div class="flex items-center gap-2 mb-4">
+                        <span id="info-tag" class="px-2 py-1 bg-indigo-100 text-indigo-700 text-xs font-bold uppercase rounded">Organ</span>
+                    </div>
+                    <p id="info-desc" class="text-slate-600 leading-relaxed mb-4">Description...</p>
+                    <div class="bg-slate-50 p-4 rounded-lg border border-slate-100">
+                        <h4 class="text-sm font-bold text-slate-700 mb-1 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                            Did you know?
+                        </h4>
+                        <p id="info-func" class="text-sm text-slate-500 italic">Function text...</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <script>
+        // --- DATA ---
+        const content = {
+            cells: {
+                sperm: {
+                    title: "Sperm (Male Sex Cell)",
+                    tag: "Gamete",
+                    desc: "The smallest cell in the human body (about 0.05 mm). It has a long tail which allows it to swim towards the ovum.",
+                    func: "The head contains a nucleus that carries genetic material."
+                },
+                ovum: {
+                    title: "Ovum (Female Sex Cell)",
+                    tag: "Gamete",
+                    desc: "Much larger than the sperm (about 0.1 mm). It contains a nucleus, cytoplasm, cell membrane, and is surrounded by a 'jelly coat'.",
+                    func: "The cytoplasm contains nutrients to support the fertilized egg."
+                }
+            },
+            male: {
+                testis: {
+                    title: "Testis",
+                    tag: "Organ",
+                    desc: "Produces sperms and male sex hormones.",
+                    func: "Sperms are produced here."
+                },
+                scrotum: {
+                    title: "Scrotum",
+                    tag: "Skin Sac",
+                    desc: "A bag of skin which holds the testis.",
+                    func: "Keeps the testis at a cooler temperature than the body for sperm production."
+                },
+                duct: {
+                    title: "Sperm Duct",
+                    tag: "Tube",
+                    desc: "It is the passage for sperms to pass from the testis to the urethra.",
+                    func: "Sperms are mixed with fluid from sex glands here."
+                },
+                gland: {
+                    title: "Sex Gland",
+                    tag: "Gland",
+                    desc: "Produce a fluid which allows sperms to swim and provides nutrients for the sperms.",
+                    func: "The fluid contains nutrients that keep the sperm alive."
+                },
+                penis: {
+                    title: "Penis",
+                    tag: "Organ",
+                    desc: "It enters the vagina and releases semen during sexual intercourse.",
+                    func: "Semen flows through the urethra to the tip of the penis and out of the body."
+                },
+                urethra: {
+                    title: "Urethra",
+                    tag: "Tube",
+                    desc: "It allows semen and urine to leave the body.",
+                    func: "Connects the bladder and sperm ducts to the outside."
+                }
+            },
+            female: {
+                ovary: {
+                    title: "Ovary",
+                    tag: "Organ",
+                    desc: "It releases mature ova and produces female sex hormones.",
+                    func: "Ovum is released into the oviduct each month. This process is called ovulation."
+                },
+                oviduct: {
+                    title: "Oviduct",
+                    tag: "Tube",
+                    desc: "It is the passage for ova to pass from the ovary to the uterus.",
+                    func: "The ovum is moved through the oviduct to the uterus. Fertilization usually happens here."
+                },
+                uterus: {
+                    title: "Uterus",
+                    tag: "Organ",
+                    desc: "It is a place where the fetus develops.",
+                    func: "Nourishes the developing baby."
+                },
+                cervix: {
+                    title: "Cervix",
+                    tag: "Gateway",
+                    desc: "The lower, narrow part of the uterus.",
+                    func: "Connects the uterus to the vagina."
+                },
+                vagina: {
+                    title: "Vagina",
+                    tag: "Organ",
+                    desc: "Receives the penis during sexual intercourse.",
+                    func: "Acts as the birth canal."
+                }
+            },
+            process: {
+                1: {
+                    title: "Ovulation",
+                    tag: "Stage 1",
+                    desc: "An ovary releases a mature ovum into the oviduct.",
+                    func: "This typically happens once a month."
+                },
+                2: {
+                    title: "Fertilization",
+                    tag: "Stage 2",
+                    desc: "The fusion of sperm and ovum. The sperm's nucleus enters the ovum and fuses with the ovum's nucleus.",
+                    func: "This forms a fertilized egg (Zygote)."
+                },
+                3: {
+                    title: "Implantation",
+                    tag: "Stage 3",
+                    desc: "The fertilized egg divides and travels to the uterus, where it implants itself.",
+                    func: "Development of the embryo begins."
+                }
+            }
+        };
+
+        // --- LOGIC ---
+        let currentTab = 'male';
+
+        function switchTab(tab) {
+            currentTab = tab;
+            
+            // 1. Update Buttons
+            document.querySelectorAll('nav button').forEach(btn => {
+                btn.className = "whitespace-nowrap flex-1 md:flex-none px-3 py-2 rounded-md text-xs md:text-sm font-semibold transition-all text-slate-500 hover:text-slate-700";
+            });
+            const activeBtn = document.getElementById(`tab-${tab}`);
+            activeBtn.className = "whitespace-nowrap flex-1 md:flex-none px-3 py-2 rounded-md text-xs md:text-sm font-semibold transition-all bg-white text-indigo-600 shadow-sm";
+
+            // 2. Show/Hide Diagrams
+            document.getElementById('diagram-male').classList.add('hidden');
+            document.getElementById('diagram-female').classList.add('hidden');
+            document.getElementById('diagram-process').classList.add('hidden');
+            document.getElementById('diagram-cells').classList.add('hidden');
+            
+            document.getElementById(`diagram-${tab}`).classList.remove('hidden');
+
+            // 3. Reset Info Panel
+            document.getElementById('info-card').classList.add('hidden');
+            document.getElementById('info-placeholder').classList.remove('hidden');
+
+            // Special Case: Process starts at stage 1
+            if (tab === 'process') {
+                setStage(1);
+            }
+        }
+
+        function switchMaleView(view) {
+            // Hide all male views
+            document.getElementById('male-view-side').classList.add('hidden');
+            document.getElementById('male-view-front').classList.add('hidden');
+            
+            // Show selected
+            document.getElementById(`male-view-${view}`).classList.remove('hidden');
+
+            // Update sub-buttons
+            const btnSide = document.getElementById('btn-side');
+            const btnFront = document.getElementById('btn-front');
+
+            if (view === 'side') {
+                btnSide.className = "px-4 py-2 text-xs font-bold rounded-lg bg-indigo-100 text-indigo-700 shadow-sm transition-all";
+                btnFront.className = "px-4 py-2 text-xs font-bold rounded-lg text-slate-500 hover:bg-slate-100 transition-all";
+            } else {
+                btnFront.className = "px-4 py-2 text-xs font-bold rounded-lg bg-indigo-100 text-indigo-700 shadow-sm transition-all";
+                btnSide.className = "px-4 py-2 text-xs font-bold rounded-lg text-slate-500 hover:bg-slate-100 transition-all";
+            }
+        }
+
+        function selectPart(system, partId) {
+            // Update Visuals (Active State)
+            document.querySelectorAll('.interactive-part').forEach(el => el.classList.remove('active'));
+            
+            // Handle duplicate IDs
+            const elements = document.querySelectorAll(`[onclick="selectPart('${system}', '${partId}')"]`);
+            elements.forEach(el => el.classList.add('active'));
+
+            // Update Info Panel
+            const data = content[system][partId];
+            showInfo(data.title, data.tag, data.desc, data.func);
+        }
+
+        function setStage(num) {
+            // Visuals
+            document.querySelectorAll('.process-stage').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`stage-${num}`).classList.remove('hidden');
+
+            // Dots
+            [1, 2, 3].forEach(n => {
+                const dot = document.getElementById(`dot-${n}`);
+                dot.className = n === num 
+                    ? "w-3 h-3 rounded-full bg-indigo-600 transition-colors scale-125" 
+                    : "w-3 h-3 rounded-full bg-slate-300 hover:bg-slate-500 transition-colors";
+            });
+
+            // Info Panel
+            const data = content.process[num];
+            showInfo(data.title, data.tag, data.desc, data.func);
+        }
+
+        function showInfo(title, tag, desc, func) {
+            document.getElementById('info-placeholder').classList.add('hidden');
+            const card = document.getElementById('info-card');
+            
+            // Trigger animation reset
+            card.classList.remove('fade-in');
+            void card.offsetWidth; // trigger reflow
+            card.classList.add('fade-in');
+            
+            card.classList.remove('hidden');
+
+            document.getElementById('info-title').innerText = title;
+            document.getElementById('info-tag').innerText = tag;
+            document.getElementById('info-desc').innerText = desc;
+            document.getElementById('info-func').innerText = func;
+            
+            // AUTO SCROLL (Mobile Friendly)
+            setTimeout(() => {
+                card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
+        }
+        
+        // Init
+        switchTab('male');
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cell Biologist - Interactive Cell Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom transitions for SVG elements */
+        .organelle-transition {
+            transition: all 0.5s ease-in-out;
+            cursor: pointer;
+        }
+        .organelle-transition:hover {
+            filter: brightness(1.1);
+        }
+        
+        /* Panel Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .hidden-panel {
+            display: none !important;
+        }
+        
+        .visible-panel {
+            /* Removed display: block to allow flex containers to keep their flex behavior */
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-800 font-sans selection:bg-blue-200 pb-12">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+                <div class="bg-emerald-600 text-white p-2 rounded-lg">
+                    <!-- Simple Cell Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                </div>
+                <h1 class="text-xl md:text-2xl font-bold text-slate-800">Cell Explorer</h1>
+            </div>
+            
+            <div class="flex bg-slate-100 p-1 rounded-lg overflow-x-auto w-full md:w-auto">
+                <button onclick="setMode('explore')" id="btn-explore" class="whitespace-nowrap px-4 py-2 rounded-md text-sm font-medium transition-colors bg-white shadow-sm text-emerald-600">
+                    Structure
+                </button>
+                <button onclick="setMode('lifecycle')" id="btn-lifecycle" class="whitespace-nowrap px-4 py-2 rounded-md text-sm font-medium transition-colors text-slate-500 hover:text-slate-700">
+                    Division & Growth
+                </button>
+                <button onclick="setMode('compare')" id="btn-compare" class="whitespace-nowrap px-4 py-2 rounded-md text-sm font-medium transition-colors text-slate-500 hover:text-slate-700">
+                    Compare
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-8">
+        
+        <!-- EXPLORE VIEW -->
+        <div id="view-explore" class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <!-- Left Column: Visuals & Controls -->
+            <div class="lg:col-span-7 flex flex-col items-center lg:sticky lg:top-24 relative z-0">
+                
+                <!-- Toggle Switch -->
+                <div class="flex items-center gap-6 mb-6 bg-white px-6 py-3 rounded-full shadow-sm border border-slate-100">
+                    <button onclick="setCellType('animal')" id="btn-animal" class="flex items-center gap-2 transition-all text-pink-600 font-bold scale-105">
+                        <span id="dot-animal" class="w-3 h-3 rounded-full bg-pink-500 transition-colors"></span>
+                        Animal Cell
+                    </button>
+                    <div class="h-6 w-px bg-slate-200"></div>
+                    <button onclick="setCellType('plant')" id="btn-plant" class="flex items-center gap-2 transition-all text-slate-400">
+                        <span id="dot-plant" class="w-3 h-3 rounded-full bg-slate-300 transition-colors"></span>
+                        Plant Cell
+                    </button>
+                </div>
+
+                <!-- The Interactive Cell SVG -->
+                <div class="relative w-full aspect-square max-w-[500px] bg-white rounded-3xl shadow-lg border border-slate-100 p-4">
+                    <svg viewBox="0 0 400 400" class="w-full h-full max-w-md mx-auto drop-shadow-xl">
+                        
+                        <!-- PLANT CELL WALL (Hexagonal) -->
+                        <path id="svg-wall"
+                            d="M 100 60 L 300 60 L 380 200 L 300 340 L 100 340 L 20 200 Z"
+                            fill="#4ade80" stroke="#166534" stroke-width="8"
+                            class="organelle-transition opacity-0 pointer-events-none"
+                            onclick="selectOrganelle('cellWall')"
+                        />
+
+                        <!-- CELL MEMBRANE / MAIN BODY -->
+                        <path id="svg-membrane"
+                            d="M 200 40 C 280 40, 360 100, 360 200 C 360 300, 280 360, 200 360 C 120 360, 40 300, 40 200 C 40 100, 120 40, 200 40 Z"
+                            fill="#ffe4e6" stroke="#e11d48" stroke-width="3"
+                            class="organelle-transition"
+                            onclick="selectOrganelle('cellMembrane')"
+                        />
+
+                        <!-- CYTOPLASM CLICK AREA -->
+                         <path id="svg-cytoplasm"
+                            d="M 200 50 C 270 50, 350 110, 350 200 C 350 290, 270 350, 200 350 C 130 350, 50 290, 50 200 C 50 110, 130 50, 200 50 Z"
+                            fill="transparent"
+                            class="cursor-pointer"
+                            onclick="selectOrganelle('cytoplasm')"
+                        />
+
+                        <!-- NUCLEUS -->
+                        <g id="svg-nucleus" class="organelle-transition" onclick="selectOrganelle('nucleus')">
+                            <circle cx="150" cy="150" r="40" fill="#a855f7" stroke="#6b21a8" stroke-width="2" />
+                            <circle cx="150" cy="150" r="15" fill="#e9d5ff" />
+                        </g>
+
+                        <!-- LARGE CENTRAL VACUOLE (Plant Only) -->
+                        <path id="svg-vacuole-large"
+                            d="M 180 150 L 280 150 L 310 200 L 280 250 L 180 250 L 150 200 Z"
+                            fill="#a5f3fc" stroke="#0891b2" stroke-width="2"
+                            class="organelle-transition opacity-0 scale-0 origin-[240px_240px]"
+                            onclick="selectOrganelle('vacuole')"
+                        />
+
+                        <!-- CHLOROPLASTS (Plant Only) -->
+                        <g id="svg-chloroplasts" class="opacity-0 transition-opacity duration-500 pointer-events-none">
+                            <g transform="translate(100, 100) rotate(20)" onclick="selectOrganelle('chloroplast')" class="organelle-transition">
+                                <ellipse cx="0" cy="0" rx="20" ry="12" fill="#22c55e" stroke="#14532d" stroke-width="2" />
+                                <line x1="-10" y1="-5" x2="-10" y2="5" stroke="#14532d" stroke-width="2" />
+                            </g>
+                            <g transform="translate(300, 100) rotate(-20)" onclick="selectOrganelle('chloroplast')" class="organelle-transition">
+                                <ellipse cx="0" cy="0" rx="20" ry="12" fill="#22c55e" stroke="#14532d" stroke-width="2" />
+                                <line x1="-10" y1="-5" x2="-10" y2="5" stroke="#14532d" stroke-width="2" />
+                            </g>
+                            <g transform="translate(100, 300) rotate(-20)" onclick="selectOrganelle('chloroplast')" class="organelle-transition">
+                                <ellipse cx="0" cy="0" rx="20" ry="12" fill="#22c55e" stroke="#14532d" stroke-width="2" />
+                                <line x1="-10" y1="-5" x2="-10" y2="5" stroke="#14532d" stroke-width="2" />
+                            </g>
+                            <g transform="translate(300, 300) rotate(20)" onclick="selectOrganelle('chloroplast')" class="organelle-transition">
+                                <ellipse cx="0" cy="0" rx="20" ry="12" fill="#22c55e" stroke="#14532d" stroke-width="2" />
+                                <line x1="-10" y1="-5" x2="-10" y2="5" stroke="#14532d" stroke-width="2" />
+                            </g>
+                        </g>
+
+                    </svg>
+                    <div class="absolute bottom-4 right-4 text-xs text-slate-400 italic">
+                        *Click parts to identify
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Info Panel -->
+            <div class="lg:col-span-5 relative z-10 min-h-[300px] lg:min-h-[400px]">
+                
+                <!-- Empty State -->
+                <div id="panel-empty" class="h-full flex flex-col items-center justify-center bg-slate-100 rounded-2xl border-2 border-dashed border-slate-300 p-8 text-center visible-panel min-h-[200px] lg:min-h-[300px]">
+                    <div class="bg-white p-4 rounded-full shadow-sm mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-slate-700 mb-2">Select an Organelle</h3>
+                    <p class="text-slate-500 max-w-xs">
+                        Click on any part of the cell diagram to reveal its name and function.
+                    </p>
+                </div>
+
+                <!-- Detail Content -->
+                <div id="panel-detail" class="bg-white rounded-2xl border-l-4 shadow-md overflow-hidden hidden-panel border-emerald-500">
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <div id="detail-icon-container" class="p-3 rounded-xl inline-block bg-emerald-100 text-emerald-600">
+                                <!-- Icon injected here -->
+                            </div>
+                            <button onclick="clearSelection()" class="text-slate-400 hover:text-slate-600">
+                                ✕
+                            </button>
+                        </div>
+                        
+                        <h2 id="detail-name" class="text-2xl font-bold mb-2 text-emerald-700">Name</h2>
+                        
+                        <div class="inline-block px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold uppercase tracking-wider mb-4">
+                            Found in: <span id="detail-found">Both</span>
+                        </div>
+
+                        <p id="detail-desc" class="text-slate-600 leading-relaxed text-lg mb-4">
+                            Description goes here.
+                        </p>
+
+                        <div class="bg-slate-50 p-4 rounded-lg border border-slate-100">
+                            <h3 class="text-sm font-bold text-slate-700 mb-1 flex items-center gap-2">
+                                Key Feature
+                            </h3>
+                            <p id="detail-fact" class="text-sm text-slate-500 italic">
+                                Fact.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LIFECYCLE VIEW -->
+        <div id="view-lifecycle" class="hidden max-w-4xl mx-auto space-y-12 fade-in">
+            <!-- 1. CELL DIVISION -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div class="border-b border-slate-100 pb-4 mb-6">
+                    <h2 class="text-xl font-bold text-slate-800">1. Cell Division</h2>
+                    <p class="text-slate-500 text-sm">One mother cell divides to form two daughter cells.</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                    <div class="h-64 bg-slate-50 rounded-xl border border-slate-200 relative flex items-center justify-center overflow-hidden">
+                        <!-- Mother Cell -->
+                        <div id="anim-cell" class="absolute w-32 h-32 bg-pink-100 border-4 border-pink-400 rounded-full flex items-center justify-center transition-all duration-1000">
+                            <!-- Nucleus -->
+                            <div id="anim-nucleus" class="w-12 h-12 bg-purple-400 rounded-full transition-all duration-1000"></div>
+                        </div>
+                        
+                        <!-- Second Nucleus -->
+                        <div id="anim-nucleus-2" class="absolute w-12 h-12 bg-purple-400 rounded-full opacity-0"></div>
+                        
+                        <!-- Daughter Cell -->
+                        <div id="anim-cell-2" class="absolute w-32 h-32 bg-pink-100 border-4 border-pink-400 rounded-full flex items-center justify-center opacity-0">
+                             <div class="w-12 h-12 bg-purple-400 rounded-full"></div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="space-y-4">
+                            <div id="step-1" class="p-3 rounded-lg bg-blue-50 border border-blue-200 text-blue-800 font-medium transition-colors">1. We start with one Mother Cell.</div>
+                            <div id="step-2" class="p-3 rounded-lg bg-white border border-slate-200 text-slate-500 transition-colors">2. The Nucleus divides into two.</div>
+                            <div id="step-3" class="p-3 rounded-lg bg-white border border-slate-200 text-slate-500 transition-colors">3. The Cytoplasm divides into two.</div>
+                            <div id="step-4" class="p-3 rounded-lg bg-white border border-slate-200 text-slate-500 transition-colors">4. Two Daughter Cells are formed.</div>
+                        </div>
+                        <div class="mt-6 flex gap-2">
+                            <button onclick="playDivision()" class="bg-emerald-600 text-white px-4 py-2 rounded-lg font-bold shadow-sm hover:bg-emerald-700 active:scale-95 transition-all">Play Animation</button>
+                            <button onclick="resetDivision()" class="bg-slate-200 text-slate-600 px-4 py-2 rounded-lg font-bold hover:bg-slate-300">Reset</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. CELL GROWTH -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div class="border-b border-slate-100 pb-4 mb-6">
+                    <h2 class="text-xl font-bold text-slate-800">2. Cell Growth</h2>
+                    <p class="text-slate-500 text-sm">After division, cells take in nutrients and grow in size.</p>
+                </div>
+                <div class="flex flex-col md:flex-row items-center justify-center gap-8 py-8">
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-pink-100 border-2 border-pink-300 rounded-full mx-auto mb-2 flex items-center justify-center">
+                            <div class="w-6 h-6 bg-purple-300 rounded-full"></div>
+                        </div>
+                        <span class="text-xs font-bold text-slate-400 uppercase">Daughter Cell</span>
+                    </div>
+                    
+                    <div class="text-slate-400">
+                        <svg width="40" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                        <div class="text-xs text-center mt-1">Nutrients</div>
+                    </div>
+
+                    <div class="text-center">
+                        <div class="w-32 h-32 bg-pink-100 border-4 border-pink-400 rounded-full mx-auto mb-2 flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform duration-500">
+                             <div class="w-12 h-12 bg-purple-400 rounded-full"></div>
+                        </div>
+                        <span class="text-xs font-bold text-slate-600 uppercase">Mature Cell</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. CELL DIFFERENTIATION -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div class="border-b border-slate-100 pb-4 mb-6">
+                    <h2 class="text-xl font-bold text-slate-800">3. Cell Differentiation</h2>
+                    <p class="text-slate-500 text-sm">Stem cells develop into different types of specialized cells.</p>
+                </div>
+                
+                <div class="flex flex-col items-center">
+                    <!-- Stem Cell -->
+                    <div class="mb-8 text-center">
+                        <div class="w-20 h-20 bg-gray-200 border-4 border-gray-400 rounded-full mx-auto flex items-center justify-center mb-2">
+                            <span class="text-xs font-bold text-gray-500">Stem Cell</span>
+                        </div>
+                        <div class="h-8 w-0.5 bg-gray-300 mx-auto"></div>
+                        <div class="h-0.5 w-64 bg-gray-300 mx-auto"></div>
+                        <div class="flex justify-between w-64 mx-auto">
+                            <div class="h-4 w-0.5 bg-gray-300"></div>
+                            <div class="h-4 w-0.5 bg-gray-300"></div>
+                            <div class="h-4 w-0.5 bg-gray-300"></div>
+                        </div>
+                    </div>
+
+                    <!-- Specialized Cells -->
+                    <div class="grid grid-cols-3 gap-4 md:gap-12 w-full max-w-2xl">
+                        <!-- Skin -->
+                        <div class="flex flex-col items-center p-4 bg-orange-50 rounded-xl border border-orange-100 hover:shadow-md transition-shadow">
+                            <div class="w-12 h-12 mb-3 bg-orange-200 rounded flex items-center justify-center">
+                                <div class="w-full h-1 bg-orange-400/50"></div>
+                            </div>
+                            <h4 class="font-bold text-orange-800 text-sm">Skin Cells</h4>
+                            <p class="text-xs text-orange-600 text-center mt-1">Protection</p>
+                        </div>
+                        
+                        <!-- Fat -->
+                        <div class="flex flex-col items-center p-4 bg-yellow-50 rounded-xl border border-yellow-100 hover:shadow-md transition-shadow">
+                            <div class="w-12 h-12 mb-3 bg-yellow-200 rounded-full border-2 border-yellow-400"></div>
+                            <h4 class="font-bold text-yellow-800 text-sm">Fat Cells</h4>
+                            <p class="text-xs text-yellow-600 text-center mt-1">Storage</p>
+                        </div>
+
+                        <!-- Nerve -->
+                        <div class="flex flex-col items-center p-4 bg-blue-50 rounded-xl border border-blue-100 hover:shadow-md transition-shadow">
+                            <div class="w-12 h-12 mb-3 relative flex items-center justify-center">
+                                <div class="w-3 h-3 bg-blue-400 rounded-full z-10"></div>
+                                <div class="absolute w-full h-0.5 bg-blue-400 rotate-45"></div>
+                                <div class="absolute w-full h-0.5 bg-blue-400 -rotate-45"></div>
+                            </div>
+                            <h4 class="font-bold text-blue-800 text-sm">Nerve Cells</h4>
+                            <p class="text-xs text-blue-600 text-center mt-1">Communication</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- COMPARE VIEW -->
+        <div id="view-compare" class="hidden max-w-4xl mx-auto">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-8 bg-slate-900 text-white text-center">
+                   <h2 class="text-2xl font-bold mb-2">Plant vs. Animal Cells</h2>
+                   <p class="text-slate-400">Key differences based on curriculum</p>
+                </div>
+                
+                <div class="grid grid-cols-3 bg-slate-50 border-b border-slate-200 text-sm font-semibold text-slate-500 uppercase tracking-wider">
+                  <div class="p-4 text-center">Feature</div>
+                  <div class="p-4 text-center text-pink-600">Animal Cell</div>
+                  <div class="p-4 text-center text-emerald-600">Plant Cell</div>
+                </div>
+  
+                <div class="divide-y divide-slate-100">
+                  <div class="grid grid-cols-3 hover:bg-slate-50 transition-colors">
+                    <div class="p-4 font-medium text-slate-700 text-center flex items-center justify-center gap-2">
+                       Shape
+                    </div>
+                    <div class="p-4 text-slate-600 text-center">Irregular</div>
+                    <div class="p-4 text-slate-600 text-center">Regular (Hexagonal)</div>
+                  </div>
+  
+                  <div class="grid grid-cols-3 hover:bg-slate-50 transition-colors">
+                    <div class="p-4 font-medium text-slate-700 text-center flex items-center justify-center gap-2">
+                       Cell Wall
+                    </div>
+                    <div class="p-4 text-slate-600 text-center">Absent</div>
+                    <div class="p-4 text-slate-600 text-center font-semibold text-emerald-700">Present (Hard/Rigid)</div>
+                  </div>
+  
+                  <div class="grid grid-cols-3 hover:bg-slate-50 transition-colors">
+                    <div class="p-4 font-medium text-slate-700 text-center flex items-center justify-center gap-2">
+                       Chloroplasts
+                    </div>
+                    <div class="p-4 text-slate-600 text-center">Absent</div>
+                    <div class="p-4 text-slate-600 text-center font-semibold text-emerald-700">Present (Photosynthesis)</div>
+                  </div>
+  
+                  <div class="grid grid-cols-3 hover:bg-slate-50 transition-colors">
+                    <div class="p-4 font-medium text-slate-700 text-center flex items-center justify-center gap-2">
+                       Vacuole
+                    </div>
+                    <div class="p-4 text-slate-600 text-center">Absent</div>
+                    <div class="p-4 text-slate-600 text-center font-semibold text-emerald-700">Large Central</div>
+                  </div>
+                </div>
+              </div>
+        </div>
+
+    </main>
+
+    <script>
+        // State
+        let currentCellType = 'animal';
+        let currentSelected = null;
+
+        // Data for Organelles (Strictly from PDF)
+        const organelleData = {
+            nucleus: {
+                name: "Nucleus",
+                icon: "N",
+                description: "Control the activities of the cell. Contain genetic materials (Growth, reproduction, metabolism, etc).",
+                foundIn: "Both",
+                colorClass: "text-purple-700",
+                bgClass: "bg-purple-100",
+                borderClass: "border-purple-500",
+                fact: "Acts like the brain of the cell."
+            },
+            chloroplast: {
+                name: "Chloroplast",
+                icon: "L",
+                description: "Where photosynthesis takes place in order to make food.",
+                foundIn: "Plant Only",
+                colorClass: "text-emerald-700",
+                bgClass: "bg-emerald-100",
+                borderClass: "border-emerald-500",
+                fact: "Makes plants green."
+            },
+            cellMembrane: {
+                name: "Cell Membrane",
+                icon: "M",
+                description: "A thin and flexible layer that encloses the cell. It controls the movement of substances in and out of the cell.",
+                foundIn: "Both",
+                colorClass: "text-blue-700",
+                bgClass: "bg-blue-100",
+                borderClass: "border-blue-500",
+                fact: "It is selectively permeable."
+            },
+            cellWall: {
+                name: "Cell Wall",
+                icon: "W",
+                description: "The outermost layer of the cell. Protects, supports and gives regular shape to a plant cell. Hard and rigid to maintain the shape.",
+                foundIn: "Plant Only",
+                colorClass: "text-emerald-900",
+                bgClass: "bg-emerald-200",
+                borderClass: "border-emerald-500",
+                fact: "Made of cellulose."
+            },
+            vacuole: {
+                name: "Vacuole",
+                icon: "V",
+                description: "Filled with water and dissolved minerals.",
+                foundIn: "Plant Only",
+                colorClass: "text-cyan-700",
+                bgClass: "bg-cyan-100",
+                borderClass: "border-cyan-500",
+                fact: "Helps maintain cell turgidity in plants."
+            },
+            cytoplasm: {
+                name: "Cytoplasm",
+                icon: "C",
+                description: "Jelly-like substance where most of the chemical reactions take place (e.g., Respiration).",
+                foundIn: "Both",
+                colorClass: "text-yellow-700",
+                bgClass: "bg-yellow-100",
+                borderClass: "border-yellow-500",
+                fact: "Fills the space between the nucleus and cell membrane."
+            }
+        };
+
+        // UI Helpers
+        function setMode(mode) {
+            // Explicitly clear selection when changing modes to match user request
+            clearSelection();
+
+            ['explore', 'lifecycle', 'compare'].forEach(v => {
+                document.getElementById(`view-${v}`).classList.add('hidden');
+                const btn = document.getElementById(`btn-${v}`);
+                btn.className = "whitespace-nowrap px-4 py-2 rounded-md text-sm font-medium transition-colors text-slate-500 hover:text-slate-700";
+            });
+            
+            document.getElementById(`view-${mode}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`btn-${mode}`);
+            activeBtn.className = "whitespace-nowrap px-4 py-2 rounded-md text-sm font-medium transition-colors bg-white shadow-sm text-emerald-600";
+        }
+
+        function setCellType(type) {
+            currentCellType = type;
+            
+            // Check if current selection needs to be cleared (if not present in new type)
+            if (currentSelected) {
+                const data = organelleData[currentSelected];
+                if (type === 'animal' && data.foundIn === "Plant Only") {
+                    clearSelection();
+                }
+                // Else: keep selection active (e.g. Nucleus selected, switching to Animal keeps Nucleus info)
+            }
+            
+            // Elements
+            const plantParts = ['svg-wall', 'svg-chloroplasts', 'svg-vacuole-large'];
+            
+            const nucleus = document.getElementById('svg-nucleus');
+            const membrane = document.getElementById('svg-membrane');
+            const cytoplasm = document.getElementById('svg-cytoplasm');
+            const vacuole = document.getElementById('svg-vacuole-large');
+
+            // Paths
+            const animalMembranePath = "M 200 40 C 280 30, 370 100, 360 200 C 350 310, 270 370, 200 360 C 110 350, 40 290, 50 200 C 60 110, 120 50, 200 40 Z"; 
+            const animalCytoPath = "M 200 50 C 270 40, 360 110, 350 200 C 340 300, 260 360, 200 350 C 120 340, 50 280, 60 200 C 70 120, 130 60, 200 50 Z";
+            
+            // Hexagon path for Plant
+            const plantMembranePath = "M 110 70 L 290 70 L 360 200 L 290 330 L 110 330 L 40 200 Z"; 
+            const plantCytoPath = "M 115 75 L 285 75 L 355 200 L 285 325 L 115 325 L 45 200 Z";
+
+            if (type === 'plant') {
+                // Show Plant Parts
+                plantParts.forEach(id => {
+                    const el = document.getElementById(id);
+                    el.classList.remove('opacity-0', 'pointer-events-none');
+                    el.classList.add('opacity-100');
+                });
+                
+                // Explicitly Fix Vacuole Visibility
+                vacuole.classList.remove('scale-0');
+                vacuole.classList.add('scale-100');
+
+                // Update Membrane/Shape
+                membrane.setAttribute('d', plantMembranePath);
+                membrane.setAttribute('fill', '#dcfce7');
+                membrane.setAttribute('stroke', '#16a34a');
+                cytoplasm.setAttribute('d', plantCytoPath);
+                
+                // Position Nucleus (Offset)
+                nucleus.setAttribute('transform', 'translate(0, 0)');
+
+                // Toggle Buttons
+                document.getElementById('btn-plant').className = "flex items-center gap-2 transition-all text-emerald-600 font-bold scale-105";
+                document.getElementById('dot-plant').className = "w-3 h-3 rounded-full bg-emerald-500 transition-colors";
+                document.getElementById('btn-animal').className = "flex items-center gap-2 transition-all text-slate-400";
+                document.getElementById('dot-animal').className = "w-3 h-3 rounded-full bg-slate-300 transition-colors";
+
+            } else {
+                // Hide Plant Parts
+                plantParts.forEach(id => {
+                    const el = document.getElementById(id);
+                    el.classList.remove('opacity-100');
+                    el.classList.add('opacity-0', 'pointer-events-none');
+                });
+                
+                // Explicitly Hide Vacuole
+                vacuole.classList.remove('scale-100');
+                vacuole.classList.add('scale-0');
+                
+                // Update Membrane/Shape
+                membrane.setAttribute('d', animalMembranePath);
+                membrane.setAttribute('fill', '#ffe4e6');
+                membrane.setAttribute('stroke', '#e11d48');
+                cytoplasm.setAttribute('d', animalCytoPath);
+                
+                // Position Nucleus (Center)
+                nucleus.setAttribute('transform', 'translate(0, 0)');
+
+                // Toggle Buttons
+                document.getElementById('btn-animal').className = "flex items-center gap-2 transition-all text-pink-600 font-bold scale-105";
+                document.getElementById('dot-animal').className = "w-3 h-3 rounded-full bg-pink-500 transition-colors";
+                document.getElementById('btn-plant').className = "flex items-center gap-2 transition-all text-slate-400";
+                document.getElementById('dot-plant').className = "w-3 h-3 rounded-full bg-slate-300 transition-colors";
+            }
+        }
+
+        function selectOrganelle(key) {
+            currentSelected = key;
+            const data = organelleData[key];
+            const panelEmpty = document.getElementById('panel-empty');
+            const panelDetail = document.getElementById('panel-detail');
+
+            // Toggle panels
+            panelEmpty.classList.remove('visible-panel');
+            panelEmpty.classList.add('hidden-panel');
+            
+            panelDetail.classList.remove('hidden-panel');
+            panelDetail.classList.add('visible-panel');
+
+            // Populate Data
+            document.getElementById('detail-name').innerText = data.name;
+            document.getElementById('detail-name').className = `text-2xl font-bold mb-2 ${data.colorClass}`;
+            
+            document.getElementById('detail-desc').innerText = data.description;
+            document.getElementById('detail-fact').innerText = data.fact;
+            document.getElementById('detail-found').innerText = data.foundIn;
+            
+            // Icon Placeholder
+            const iconContainer = document.getElementById('detail-icon-container');
+            iconContainer.innerText = data.icon;
+            iconContainer.className = `w-12 h-12 flex items-center justify-center text-xl font-bold rounded-xl inline-block ${data.bgClass} ${data.colorClass}`;
+
+            // Border color
+            panelDetail.className = `bg-white rounded-2xl border-l-4 shadow-md overflow-hidden visible-panel ${data.borderClass}`;
+
+            // Scroll
+            setTimeout(() => {
+                panelDetail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 50);
+        }
+
+        function clearSelection() {
+            currentSelected = null;
+            const panelEmpty = document.getElementById('panel-empty');
+            const panelDetail = document.getElementById('panel-detail');
+
+            panelEmpty.classList.remove('hidden-panel');
+            panelEmpty.classList.add('visible-panel');
+            
+            panelDetail.classList.remove('visible-panel');
+            panelDetail.classList.add('hidden-panel');
+        }
+
+        // --- ANIMATION LOGIC ---
+        function playDivision() {
+            const cell = document.getElementById('anim-cell');
+            const cell2 = document.getElementById('anim-cell-2');
+            const nucleus1 = document.getElementById('anim-nucleus');
+            const nucleus2 = document.getElementById('anim-nucleus-2');
+            
+            // Reset
+            cell.style.width = '8rem'; 
+            cell.style.transform = 'translateX(0)';
+            cell2.classList.add('opacity-0');
+            cell2.style.transform = 'translateX(0)';
+            nucleus2.classList.add('opacity-0');
+            nucleus2.style.transform = 'translateX(0)';
+            
+            const highlightStep = (n) => {
+                [1,2,3,4].forEach(i => {
+                    const el = document.getElementById(`step-${i}`);
+                    el.className = i === n ? "p-3 rounded-lg bg-blue-50 border border-blue-200 text-blue-800 font-medium transition-colors scale-105 shadow-sm" : "p-3 rounded-lg bg-white border border-slate-200 text-slate-400 transition-colors";
+                });
+            };
+
+            highlightStep(1);
+
+            setTimeout(() => {
+                highlightStep(2);
+                nucleus1.style.transform = 'translateX(-20px)';
+                nucleus2.classList.remove('opacity-0');
+                nucleus2.style.transform = 'translateX(20px)';
+            }, 1000);
+
+            setTimeout(() => {
+                highlightStep(3);
+                cell.style.width = '14rem'; 
+            }, 2500);
+
+            setTimeout(() => {
+                highlightStep(4);
+                cell.style.width = '8rem'; 
+                cell.style.transform = 'translateX(-50px)';
+                cell2.classList.remove('opacity-0');
+                cell2.style.transform = 'translateX(50px)';
+                nucleus1.style.transform = 'translateX(0)';
+                nucleus2.style.transform = 'translateX(0)';
+                nucleus2.classList.add('opacity-0'); 
+            }, 4000);
+        }
+
+        function resetDivision() {
+            const cell = document.getElementById('anim-cell');
+            const cell2 = document.getElementById('anim-cell-2');
+            const nucleus1 = document.getElementById('anim-nucleus');
+            const nucleus2 = document.getElementById('anim-nucleus-2');
+            
+            cell.style.width = '8rem';
+            cell.style.transform = 'translateX(0)';
+            cell2.classList.add('opacity-0');
+            nucleus1.style.transform = 'translateX(0)';
+            nucleus2.classList.add('opacity-0');
+            nucleus2.style.transform = 'translateX(0)';
+            
+            [1,2,3,4].forEach(i => {
+                document.getElementById(`step-${i}`).className = i === 1 ? "p-3 rounded-lg bg-blue-50 border border-blue-200 text-blue-800 font-medium transition-colors" : "p-3 rounded-lg bg-white border border-slate-200 text-slate-500 transition-colors";
+            });
+        }
+
+        // Initialize
+        setCellType('animal');
+
+    </script>
+</body>
+</html>

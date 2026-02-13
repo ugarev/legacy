@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Microscope Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Transitions */
+        .part-transition {
+            transition: all 0.3s ease-in-out;
+            cursor: pointer;
+        }
+        .part-transition:hover {
+            filter: brightness(1.1) drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+        }
+        .part-transition.active {
+            filter: brightness(1.2) drop-shadow(0 0 8px rgba(16, 185, 129, 0.6)); /* Emerald shadow */
+            stroke: #059669; /* Emerald-600 */
+            stroke-width: 3;
+        }
+
+        /* Invisible Hit Zones */
+        .hit-zone {
+            fill: transparent;
+            stroke: transparent;
+            stroke-width: 30px;
+            cursor: pointer;
+        }
+        .hit-zone-fill {
+            fill: transparent;
+            stroke: none;
+            cursor: pointer;
+        }
+
+        /* Animations */
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Knob Rotation Animation */
+        .rotate-knob { transition: transform 0.5s ease; }
+        .rotate-cw { transform: rotate(180deg); }
+        .rotate-ccw { transform: rotate(-180deg); }
+
+        /* Stage Movement */
+        .stage-move { transition: transform 1s ease-in-out; }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-800 font-sans pb-12">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-3">
+            <div class="flex items-center gap-2 self-start md:self-auto">
+                <div class="bg-emerald-600 text-white p-2 rounded-lg">
+                    <!-- Microscope Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.2 7.9 3 11v9c0 .6.4 1 1 1h9c.6 0 1-.4 1-1v-9l-4.2-3.1"/><path d="M14 13h3"/><path d="M14 17h3"/><path d="M5 9h2"/><path d="M5 13h2"/><path d="M5 17h2"/><path d="M12 2v4"/><path d="m12 6 3 3"/><path d="m12 6-3 3"/><circle cx="12" cy="13" r="3"/></svg>
+                </div>
+                <h1 class="text-lg font-bold text-slate-800">Microscope Explorer</h1>
+            </div>
+            
+            <div class="flex bg-slate-100 p-1 rounded-lg overflow-x-auto w-full md:w-auto scrollbar-hide">
+                <button onclick="setMode('explore')" id="btn-explore" class="whitespace-nowrap flex-1 md:flex-none px-4 py-2 rounded-md text-sm font-semibold transition-all bg-white text-emerald-600 shadow-sm">Structure</button>
+                <button onclick="setMode('procedure')" id="btn-procedure" class="whitespace-nowrap flex-1 md:flex-none px-4 py-2 rounded-md text-sm font-semibold transition-all text-slate-500 hover:text-slate-700">Operating Steps</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-6">
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- LEFT COLUMN: MICROSCOPE DIAGRAM -->
+            <div class="lg:col-span-7 flex flex-col items-center relative z-10">
+                <div class="bg-white p-4 rounded-3xl shadow-lg border border-slate-200 w-full max-w-[500px] aspect-[3/4] relative overflow-hidden bg-slate-50">
+                    
+                    <svg viewBox="0 0 400 600" class="w-full h-full">
+                        <defs>
+                            <linearGradient id="grad-metal" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" style="stop-color:#94a3b8;stop-opacity:1" />
+                                <stop offset="50%" style="stop-color:#cbd5e1;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#94a3b8;stop-opacity:1" />
+                            </linearGradient>
+                            <linearGradient id="grad-black" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" style="stop-color:#334155;stop-opacity:1" />
+                                <stop offset="50%" style="stop-color:#475569;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#334155;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+
+                        <!-- BASE & ARM -->
+                        <!-- Arm -->
+                        <path d="M 220 250 Q 280 250 280 350 L 280 480 Q 280 550 200 550 L 100 550" fill="none" stroke="url(#grad-metal)" stroke-width="40" stroke-linecap="round"
+                            class="part-transition" onclick="selectPart('arm')" id="svg-arm"/>
+                        <!-- Base -->
+                        <path d="M 60 550 L 340 550 C 360 550, 360 580, 340 580 L 60 580 C 40 580, 40 550, 60 550 Z" fill="#334155"
+                             class="part-transition" onclick="selectPart('base')" />
+
+                        <!-- BODY TUBE & EYEPIECE -->
+                        <!-- Body Tube -->
+                        <rect x="180" y="100" width="40" height="150" fill="url(#grad-black)" transform="rotate(-15 200 175)"
+                            class="part-transition" onclick="selectPart('tube')" />
+                        <!-- Eyepiece -->
+                        <rect x="175" y="70" width="50" height="40" rx="5" fill="#475569" transform="rotate(-15 200 175)"
+                            class="part-transition" onclick="selectPart('eyepiece')" id="svg-eyepiece" />
+                        
+                        <!-- NOSEPIECE & OBJECTIVES -->
+                        <g transform="translate(190, 260)">
+                            <!-- Nosepiece -->
+                            <path d="M -20 0 L 20 0 L 10 15 L -10 15 Z" fill="#64748b" />
+                            <!-- Objective 1 (Short/Low) -->
+                            <rect x="-15" y="15" width="10" height="20" fill="url(#grad-metal)" class="part-transition" onclick="selectPart('objective')" id="obj-1"/>
+                            <rect x="-15" y="30" width="10" height="5" fill="#ef4444" pointer-events="none"/> <!-- Red stripe -->
+                            <!-- Objective 2 (Long/High) -->
+                            <rect x="5" y="15" width="10" height="35" fill="url(#grad-metal)" class="part-transition" onclick="selectPart('objective')" id="obj-2"/>
+                            <rect x="5" y="40" width="10" height="5" fill="#3b82f6" pointer-events="none"/> <!-- Blue stripe -->
+                        </g>
+
+                        <!-- STAGE, CLIPS & DIAPHRAGM (GROUPED FOR MOVEMENT) -->
+                        <g id="group-stage" class="stage-move">
+                            
+                            <!-- 1. Stage (Background) -->
+                            <rect x="120" y="320" width="160" height="15" fill="#1e293b" class="part-transition" onclick="selectPart('stage')" id="svg-stage" />
+                            <!-- Hole (implied) -->
+                            <line x1="190" y1="328" x2="210" y2="328" stroke="#000" stroke-width="2"/>
+
+                            <!-- 2. Diaphragm (Under Stage but interactable) -->
+                            <g id="svg-diaphragm" class="part-transition" onclick="selectPart('diaphragm')">
+                                <rect x="180" y="335" width="40" height="15" rx="2" fill="#475569" />
+                                <line x1="185" y1="342" x2="215" y2="342" stroke="#64748b" stroke-width="2" />
+                            </g>
+
+                            <!-- 3. Clips (On Top of Stage) -->
+                            <path id="svg-clip-left" d="M 160 320 L 170 310 L 180 320" fill="none" stroke="#94a3b8" stroke-width="4" stroke-linecap="round" class="part-transition" onclick="selectPart('clip')" />
+                            <path id="svg-clip-right" d="M 240 320 L 230 310 L 220 320" fill="none" stroke="#94a3b8" stroke-width="4" stroke-linecap="round" class="part-transition" onclick="selectPart('clip')" />
+
+                            <!-- Slide (Hidden initially) -->
+                            <rect id="svg-slide" x="160" y="318" width="80" height="2" fill="rgba(255,255,255,0.8)" stroke="#cbd5e1" class="opacity-0 transition-opacity duration-300"/>
+
+                            <!-- 4. HIT ZONES (For easier clicking) -->
+                            <!-- Stage Hit Zone (Avoids center where clips/diaphragm are) -->
+                            <rect x="120" y="310" width="40" height="40" class="hit-zone-fill" onclick="selectPart('stage')" />
+                            <rect x="240" y="310" width="40" height="40" class="hit-zone-fill" onclick="selectPart('stage')" />
+                            
+                            <!-- Diaphragm Hit Zone (Generous area below stage) -->
+                            <rect x="170" y="335" width="60" height="25" class="hit-zone-fill" onclick="selectPart('diaphragm')" />
+
+                            <!-- Clips Hit Zones (Generous area on top of stage) -->
+                            <circle cx="170" cy="315" r="15" class="hit-zone-fill" onclick="selectPart('clip')" />
+                            <circle cx="230" cy="315" r="15" class="hit-zone-fill" onclick="selectPart('clip')" />
+
+                        </g>
+
+                        <!-- KNOBS -->
+                        <g transform="translate(260, 380)">
+                            <!-- Coarse Knob -->
+                            <circle cx="0" cy="0" r="25" fill="#334155" stroke="#1e293b" stroke-width="2" class="part-transition rotate-knob" onclick="selectPart('coarse')" id="svg-coarse"/>
+                            <circle cx="0" cy="0" r="15" fill="none" stroke="#475569" stroke-width="2" stroke-dasharray="4 2" pointer-events="none"/>
+                            <!-- Fine Knob -->
+                            <circle cx="0" cy="0" r="12" fill="#64748b" stroke="#475569" stroke-width="2" class="part-transition rotate-knob" onclick="selectPart('fine')" id="svg-fine"/>
+                        </g>
+
+                        <!-- LIGHT SOURCE -->
+                        <g transform="translate(200, 520)" class="part-transition" onclick="selectPart('light')" id="svg-light">
+                            <circle cx="0" cy="0" r="20" fill="#fef08a" stroke="#ca8a04" stroke-width="2" />
+                            <circle cx="0" cy="0" r="15" fill="#fef9c3" />
+                            <!-- Light Rays -->
+                            <g id="light-rays" class="opacity-0 transition-opacity duration-500">
+                                <line x1="0" y1="-25" x2="0" y2="-100" stroke="#fef08a" stroke-width="4" stroke-dasharray="4 4" opacity="0.6"/>
+                                <line x1="-10" y1="-22" x2="-30" y2="-80" stroke="#fef08a" stroke-width="2" stroke-dasharray="4 4" opacity="0.4"/>
+                                <line x1="10" y1="-22" x2="30" y2="-80" stroke="#fef08a" stroke-width="2" stroke-dasharray="4 4" opacity="0.4"/>
+                            </g>
+                        </g>
+
+                        <!-- HIT ZONES (General) -->
+                        <path d="M 220 250 Q 280 250 280 350 L 280 480" class="hit-zone" onclick="selectPart('arm')" />
+                        <rect x="175" y="70" width="50" height="40" transform="rotate(-15 200 175)" class="hit-zone-fill" onclick="selectPart('eyepiece')" />
+                        <circle cx="260" cy="380" r="35" class="hit-zone-fill" onclick="selectPart('coarse')" />
+                        <circle cx="260" cy="380" r="15" class="hit-zone-fill" onclick="selectPart('fine')" />
+                        
+                    </svg>
+                    <div class="absolute bottom-4 right-4 text-xs text-slate-400 italic pointer-events-none">
+                        *Click parts to identify
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: INFO / PROCEDURE -->
+            <div class="lg:col-span-5 relative z-10">
+                
+                <!-- 1. EXPLORE MODE PANEL -->
+                <div id="panel-explore" class="min-h-[400px]">
+                    <!-- Empty State -->
+                    <div id="info-placeholder" class="h-full flex flex-col items-center justify-center text-center p-8 bg-white border border-dashed border-slate-300 rounded-2xl">
+                        <div class="p-3 bg-slate-100 rounded-full mb-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                        </div>
+                        <h3 class="font-semibold text-slate-600">Select a Part</h3>
+                        <p class="text-sm text-slate-400">Click on any part of the microscope to learn its function.</p>
+                    </div>
+
+                    <!-- Info Card -->
+                    <div id="info-card" class="hidden bg-white border-l-4 border-emerald-500 shadow-md rounded-r-xl rounded-l-sm p-6 fade-in">
+                        <div class="flex justify-between items-start mb-2">
+                            <h2 id="info-title" class="text-2xl font-bold text-emerald-800">Title</h2>
+                            <button onclick="clearSelection()" class="text-slate-400 hover:text-slate-600">✕</button>
+                        </div>
+                        <span id="info-tag" class="px-2 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold uppercase rounded mb-4 inline-block">Component</span>
+                        
+                        <div class="space-y-4 text-slate-600 leading-relaxed">
+                            <p id="info-desc" class="text-lg">Description...</p>
+                            <div id="info-extra-container" class="bg-slate-50 p-3 rounded-lg border border-slate-100 hidden">
+                                <p id="info-extra" class="text-sm italic text-slate-500"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. PROCEDURE MODE PANEL -->
+                <div id="panel-procedure" class="hidden min-h-[400px] bg-white rounded-2xl shadow-sm border border-slate-200 p-6 fade-in">
+                    <div class="border-b border-slate-100 pb-4 mb-4 flex justify-between items-center">
+                        <h2 class="text-xl font-bold text-slate-800">Operating Steps</h2>
+                        <span id="step-counter" class="text-xs font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded">Step 1 of 9</span>
+                    </div>
+
+                    <div class="bg-blue-50 border border-blue-100 rounded-xl p-6 mb-6">
+                        <p id="step-text" class="text-lg font-medium text-blue-900">1. Plug in the light microscope.</p>
+                    </div>
+
+                    <div class="flex gap-2 justify-end">
+                        <button onclick="prevStep()" id="btn-prev" class="px-4 py-2 text-sm font-bold text-slate-500 bg-slate-100 rounded-lg hover:bg-slate-200 disabled:opacity-50">Back</button>
+                        <button onclick="nextStep()" id="btn-next" class="px-6 py-2 text-sm font-bold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700">Next Step</button>
+                    </div>
+                    
+                    <div class="mt-6 pt-4 border-t border-slate-100">
+                        <p class="text-xs text-slate-400">Follows standard procedure from Part 1 PDF.</p>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <script>
+        // --- DATA (Strictly from PDF) ---
+        const partData = {
+            eyepiece: {
+                title: "Eyepiece (lens)",
+                desc: "Magnify the image of the object.",
+                extra: "The lens is near our eye."
+            },
+            objective: {
+                title: "Objective (lens)",
+                desc: "Magnify the image of the object.",
+                extra: "The lens is near the object."
+            },
+            tube: {
+                title: "Body Tube",
+                desc: "Separate eyepiece lens from objective lens.",
+                extra: ""
+            },
+            coarse: {
+                title: "Coarse Adjustment Knob",
+                desc: "Used for making large adjustments in focusing.",
+                extra: "(Adjust focus roughly)"
+            },
+            fine: {
+                title: "Fine Adjustment Knob",
+                desc: "Used for making small adjustments in focusing.",
+                extra: "(Adjust focus sharply)"
+            },
+            clip: {
+                title: "Clip",
+                desc: "Used for holding the object/glass slide on the stage.",
+                extra: ""
+            },
+            arm: {
+                title: "Arm",
+                desc: "The part we use to carry the microscope from one place to another.",
+                extra: ""
+            },
+            diaphragm: {
+                title: "Diaphragm",
+                desc: "The part we use to adjust the amount of light entering the microscope.",
+                extra: ""
+            },
+            stage: {
+                title: "Stage",
+                desc: "The place where the object is held for viewing.",
+                extra: ""
+            },
+            light: {
+                title: "Light Source / Mirror",
+                desc: "For providing light.",
+                extra: ""
+            },
+            base: {
+                title: "Base",
+                desc: "The bottom support of the microscope.",
+                extra: ""
+            }
+        };
+
+        const procedureSteps = [
+            { text: "1. Plug in the light microscope (Switch on the microscope's light).", action: "light_on" },
+            { text: "2. Put an eyepiece with the lowest magnification (e.g. 5×) on the microscope.", action: "eyepiece_low" },
+            { text: "3. Turn the coarse adjustment knob to lower the stage.", action: "stage_down" },
+            { text: "4. Rotate the objectives, so that the one with the lowest magnification (e.g. 4×) is right over the hole in the stage.", action: "obj_low" },
+            { text: "5. Place the glass slide on the stage. Fix it in position with the clips.", action: "slide_in" },
+            { text: "6. Look at the objective and the stage from the side. Turn the coarse adjustment knob slowly to raise the stage until the objective is close to the glass slide.", action: "stage_up" },
+            { text: "7. Look through the eyepiece with one eye (and keep the other eye open). Adjust the diaphragm so that enough light enters the microscope.", action: "adjust_dia" },
+            { text: "8. Turn the coarse adjustment knob slowly to lower the stage until the image comes into focus.", action: "focus_rough" },
+            { text: "9. Turn the fine adjustment knob slowly to get the sharpest image.", action: "focus_fine" }
+        ];
+
+        // --- STATE ---
+        let currentStep = 0;
+        let activePart = null;
+
+        // --- FUNCTIONS ---
+
+        function setMode(mode) {
+            // UI Toggle
+            document.getElementById('panel-explore').classList.add('hidden');
+            document.getElementById('panel-procedure').classList.add('hidden');
+            document.getElementById(`panel-${mode}`).classList.remove('hidden');
+
+            const btnExplore = document.getElementById('btn-explore');
+            const btnProc = document.getElementById('btn-procedure');
+
+            if (mode === 'explore') {
+                btnExplore.className = "whitespace-nowrap flex-1 md:flex-none px-4 py-2 rounded-md text-sm font-semibold transition-all bg-white text-emerald-600 shadow-sm";
+                btnProc.className = "whitespace-nowrap flex-1 md:flex-none px-4 py-2 rounded-md text-sm font-semibold transition-all text-slate-500 hover:text-slate-700";
+                resetVisuals(); // Reset sim state
+            } else {
+                btnProc.className = "whitespace-nowrap flex-1 md:flex-none px-4 py-2 rounded-md text-sm font-semibold transition-all bg-white text-emerald-600 shadow-sm";
+                btnExplore.className = "whitespace-nowrap flex-1 md:flex-none px-4 py-2 rounded-md text-sm font-semibold transition-all text-slate-500 hover:text-slate-700";
+                currentStep = 0;
+                updateStep();
+            }
+        }
+
+        function selectPart(id) {
+            // Highlight Visual
+            document.querySelectorAll('.part-transition').forEach(el => el.classList.remove('active'));
+            
+            // Highlight Main Element
+            const mainTarget = document.getElementById(`svg-${id}`);
+            if (mainTarget) mainTarget.classList.add('active');
+
+            // Handle Grouped/Duplicated Elements (like clips)
+            if (id === 'clip') {
+                document.getElementById('svg-clip-left').classList.add('active');
+                document.getElementById('svg-clip-right').classList.add('active');
+            }
+
+            // Show Info
+            const data = partData[id];
+            document.getElementById('info-placeholder').classList.add('hidden');
+            const card = document.getElementById('info-card');
+            card.classList.remove('hidden');
+            
+            // Reflow animation
+            card.classList.remove('fade-in');
+            void card.offsetWidth;
+            card.classList.add('fade-in');
+
+            document.getElementById('info-title').innerText = data.title;
+            document.getElementById('info-desc').innerText = data.desc;
+            
+            const extra = document.getElementById('info-extra');
+            const extraCont = document.getElementById('info-extra-container');
+            if (data.extra) {
+                extra.innerText = data.extra;
+                extraCont.classList.remove('hidden');
+            } else {
+                extraCont.classList.add('hidden');
+            }
+            
+            activePart = id;
+            
+            // Scroll on mobile
+            setTimeout(() => {
+                card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
+        }
+
+        function clearSelection() {
+            document.querySelectorAll('.part-transition').forEach(el => el.classList.remove('active'));
+            document.getElementById('info-card').classList.add('hidden');
+            document.getElementById('info-placeholder').classList.remove('hidden');
+            activePart = null;
+        }
+
+        // --- PROCEDURE LOGIC ---
+
+        function updateStep() {
+            const step = procedureSteps[currentStep];
+            document.getElementById('step-text').innerText = step.text;
+            document.getElementById('step-counter').innerText = `Step ${currentStep + 1} of 9`;
+            
+            document.getElementById('btn-prev').disabled = currentStep === 0;
+            document.getElementById('btn-next').innerText = currentStep === 8 ? "Finish" : "Next Step";
+
+            // Visual Simulation
+            resetVisuals();
+            visualizeAction(step.action);
+        }
+
+        function nextStep() {
+            if (currentStep < 8) {
+                currentStep++;
+                updateStep();
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateStep();
+            }
+        }
+
+        function visualizeAction(action) {
+            // Reset basics done by resetVisuals()
+            
+            switch(action) {
+                case 'light_on':
+                    document.getElementById('light-rays').classList.remove('opacity-0');
+                    highlightPart('svg-light');
+                    break;
+                case 'eyepiece_low':
+                    highlightPart('svg-eyepiece');
+                    // Maybe change color slightly to indicate "5x" vs "10x"
+                    break;
+                case 'stage_down':
+                    document.getElementById('group-stage').setAttribute('transform', 'translate(0, 30)');
+                    document.getElementById('svg-coarse').classList.add('rotate-cw');
+                    highlightPart('svg-coarse');
+                    break;
+                case 'obj_low':
+                    // Visual cue: active objective
+                    highlightPart('obj-1');
+                    break;
+                case 'slide_in':
+                    document.getElementById('svg-slide').classList.remove('opacity-0');
+                    document.getElementById('group-stage').setAttribute('transform', 'translate(0, 30)'); // Keep it down from prev step
+                    highlightPart('group-stage'); // Highlight clips indirectly by stage context or logic
+                    document.getElementById('svg-clip-left').classList.add('active'); // Specific highlight
+                    document.getElementById('svg-clip-right').classList.add('active');
+                    break;
+                case 'stage_up':
+                    document.getElementById('svg-slide').classList.remove('opacity-0');
+                    // Animate up
+                    document.getElementById('group-stage').setAttribute('transform', 'translate(0, 5)');
+                    document.getElementById('svg-coarse').classList.add('rotate-ccw');
+                    highlightPart('svg-coarse');
+                    break;
+                case 'adjust_dia':
+                    document.getElementById('svg-slide').classList.remove('opacity-0');
+                    document.getElementById('light-rays').classList.remove('opacity-0');
+                    highlightPart('svg-diaphragm');
+                    break;
+                case 'focus_rough':
+                    document.getElementById('svg-slide').classList.remove('opacity-0');
+                    document.getElementById('light-rays').classList.remove('opacity-0');
+                    // Slight down
+                    document.getElementById('group-stage').setAttribute('transform', 'translate(0, 10)');
+                    document.getElementById('svg-coarse').classList.add('rotate-cw');
+                    highlightPart('svg-coarse');
+                    break;
+                case 'focus_fine':
+                    document.getElementById('svg-slide').classList.remove('opacity-0');
+                    document.getElementById('light-rays').classList.remove('opacity-0');
+                    document.getElementById('group-stage').setAttribute('transform', 'translate(0, 10)'); // Maintain position
+                    document.getElementById('svg-fine').classList.add('rotate-ccw');
+                    highlightPart('svg-fine');
+                    break;
+            }
+        }
+
+        function highlightPart(id) {
+            const el = document.getElementById(id);
+            if(el) {
+                el.classList.add('active');
+                setTimeout(() => el.classList.remove('active'), 1500); // Pulse effect
+            }
+        }
+
+        function resetVisuals() {
+            document.getElementById('light-rays').classList.add('opacity-0');
+            document.getElementById('svg-slide').classList.add('opacity-0');
+            document.getElementById('group-stage').setAttribute('transform', 'translate(0, 0)');
+            
+            const knobs = document.querySelectorAll('.rotate-knob');
+            knobs.forEach(k => {
+                k.classList.remove('rotate-cw', 'rotate-ccw');
+                // Trigger reflow to reset animation
+                void k.offsetWidth; 
+            });
+            
+            document.querySelectorAll('.active').forEach(el => el.classList.remove('active'));
+        }
+
+        // Init
+        setMode('explore');
+
+    </script>
+</body>
+</html>

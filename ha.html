@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HA! You can't do this</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Adding a little animation to the text for emphasis */
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        .animate-pulse-slow {
+            animation: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 h-screen w-full flex flex-col items-center justify-center overflow-hidden">
+
+    <!-- Main Message -->
+    <h1 class="text-6xl md:text-9xl font-black text-white text-center mb-16 tracking-tighter animate-pulse-slow px-4 leading-tight">
+        HA! <br class="md:hidden" />
+        <span class="text-red-500">You can't do this</span>
+    </h1>
+
+    <!-- Big Button -->
+    <a href="https://ugarev.netlify.app/" 
+       class="group relative inline-flex items-center justify-center px-12 py-6 overflow-hidden font-bold text-white transition-all duration-300 bg-blue-600 rounded-2xl hover:bg-blue-700 hover:scale-105 hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-blue-300">
+        
+        <!-- Button Text -->
+        <span class="relative text-3xl md:text-4xl uppercase tracking-wider">
+            Click Me
+        </span>
+        
+        <!-- Shine effect on hover -->
+        <div class="absolute inset-0 -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/20 to-transparent z-10"></div>
+    </a>
+
+    <!-- Background Decoration (Subtle Grid) -->
+    <div class="absolute inset-0 -z-10 h-full w-full bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+
+</body>
+</html>

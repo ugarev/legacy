@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bully Dailletin | Editor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
+        /* Prevent auto-zoom on iOS inputs */
+        input, select, textarea { font-size: 16px !important; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="text-slate-800 h-screen flex flex-col overflow-hidden bg-slate-50">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 h-16 flex-none z-30 shadow-sm relative">
+        <div class="w-full max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
+            <div class="flex items-center gap-2 sm:gap-3">
+                <div class="bg-blue-600 text-white p-1.5 rounded-lg flex-shrink-0">
+                    <i data-lucide="edit-3" class="w-5 h-5"></i>
+                </div>
+                <h1 class="text-lg font-bold text-slate-900 truncate">
+                    <span class="hidden sm:inline">Bully Dailletin</span>
+                    <span class="sm:hidden">Editor</span>
+                </h1>
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <input type="file" id="fileInput" accept=".html" class="hidden">
+                
+                <button onclick="document.getElementById('fileInput').click()" class="flex items-center justify-center gap-2 p-2 sm:px-3 sm:py-2 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors" title="Import">
+                    <i data-lucide="upload" class="w-5 h-5 sm:w-4 sm:h-4"></i>
+                    <span class="hidden sm:inline">Import</span>
+                </button>
+                
+                <button onclick="createNew()" class="flex items-center justify-center gap-2 p-2 sm:px-3 sm:py-2 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors" title="New">
+                    <i data-lucide="file-plus" class="w-5 h-5 sm:w-4 sm:h-4"></i>
+                    <span class="hidden sm:inline">New</span>
+                </button>
+                
+                <div class="h-6 w-px bg-slate-300 mx-0.5 sm:mx-1"></div>
+                
+                <button onclick="exportHTML()" class="flex items-center justify-center gap-2 p-2 sm:px-4 sm:py-2 text-sm font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm transition-colors ring-offset-2 focus:ring-2 ring-blue-500" title="Export">
+                    <i data-lucide="download" class="w-5 h-5 sm:w-4 sm:h-4"></i>
+                    <span class="hidden sm:inline">Export</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="flex-grow flex relative overflow-hidden">
+        
+        <!-- Sidebar: Versions List -->
+        <!-- Added md:translate-x-0 to fix desktop disappearance -->
+        <aside id="sidebar" class="w-full md:w-80 bg-white border-r border-slate-200 flex flex-col absolute inset-0 md:static z-20 transition-transform duration-300 md:translate-x-0">
+            <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 flex-none h-14">
+                <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Versions History</h2>
+                <button onclick="addVersion()" class="flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors text-xs font-bold">
+                    <i data-lucide="plus" class="w-3 h-3"></i> Add
+                </button>
+            </div>
+            <div id="versions-list" class="flex-grow overflow-y-auto p-2 space-y-2 pb-20 md:pb-2">
+                <!-- Version Items Injected Here -->
+            </div>
+        </aside>
+
+        <!-- Center: Editor Form -->
+        <!-- Added md:translate-x-0 to ensure visibility on desktop -->
+        <section id="editor-panel" class="w-full md:flex-grow bg-slate-50/50 absolute inset-0 md:static z-20 overflow-hidden flex flex-col translate-x-full md:translate-x-0 transition-transform duration-300">
+            
+            <!-- Mobile Navigation Header -->
+            <div class="md:hidden bg-white border-b border-slate-200 p-3 flex items-center gap-3 shadow-sm flex-none">
+                <button onclick="showList()" class="p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-full">
+                    <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                </button>
+                <span class="font-bold text-slate-800">Edit Details</span>
+            </div>
+
+            <!-- Empty State (Desktop Only) -->
+            <div id="no-selection" class="hidden md:flex absolute inset-0 flex-col items-center justify-center text-slate-400">
+                <i data-lucide="arrow-left-circle" class="w-12 h-12 mb-4 opacity-50"></i>
+                <p>Select a version to edit</p>
+            </div>
+
+            <!-- Scrollable Content -->
+            <div id="edit-form" class="hidden md:block h-full overflow-y-auto pb-20">
+                <div class="max-w-3xl mx-auto md:p-6 lg:p-10 p-4">
+                    
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200">
+                        <!-- Header of Form -->
+                        <div class="p-4 sm:p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+                            <div>
+                                <h2 class="text-xl font-bold text-slate-900">Edit Version</h2>
+                                <p class="text-sm text-slate-500 mt-1">Manage details for this release.</p>
+                            </div>
+                            <button onclick="deleteCurrentVersion()" class="text-red-500 hover:text-red-700 text-sm font-medium flex items-center justify-center gap-1 px-3 py-2 bg-red-50 hover:bg-red-100 rounded-lg transition-colors w-full sm:w-auto">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i> Delete
+                            </button>
+                        </div>
+
+                        <div class="p-4 sm:p-6 space-y-6">
+                            <!-- Top Fields Grid -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                <div class="space-y-1.5">
+                                    <label class="text-xs font-semibold text-slate-500 uppercase">Version</label>
+                                    <input type="text" id="inp-version" class="w-full px-3 py-3 sm:py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all font-mono" placeholder="e.g. 1.0.0">
+                                </div>
+                                <div class="space-y-1.5">
+                                    <label class="text-xs font-semibold text-slate-500 uppercase">Date</label>
+                                    <input type="date" id="inp-date" class="w-full px-3 py-3 sm:py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all">
+                                </div>
+                                <div class="space-y-1.5">
+                                    <label class="text-xs font-semibold text-slate-500 uppercase">Type</label>
+                                    <div class="relative">
+                                        <select id="inp-type" class="w-full px-3 py-3 sm:py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all appearance-none">
+                                            <option value="major">Major</option>
+                                            <option value="minor">Minor</option>
+                                            <option value="patch">Patch</option>
+                                        </select>
+                                        <i data-lucide="chevron-down" class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                                    </div>
+                                </div>
+                                <div class="space-y-1.5">
+                                    <label class="text-xs font-semibold text-slate-500 uppercase">Title</label>
+                                    <input type="text" id="inp-title" class="w-full px-3 py-3 sm:py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all" placeholder="e.g. The Big Update">
+                                </div>
+                            </div>
+
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-semibold text-slate-500 uppercase">Description (Optional)</label>
+                                <textarea id="inp-desc" rows="2" class="w-full px-3 py-3 sm:py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all" placeholder="Brief summary of this update..."></textarea>
+                            </div>
+
+                            <!-- Changes Section -->
+                            <div class="pt-4 border-t border-slate-100">
+                                <div class="flex items-center justify-between mb-4">
+                                    <label class="text-xs font-semibold text-slate-500 uppercase">Changes Log</label>
+                                    <button onclick="addChangeItem()" class="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 bg-blue-50 px-3 py-2 rounded-lg hover:bg-blue-100 transition-colors">
+                                        <i data-lucide="plus" class="w-3 h-3"></i> Add Change
+                                    </button>
+                                </div>
+                                
+                                <div id="changes-list" class="space-y-4 sm:space-y-3">
+                                    <!-- Change rows injected here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Hidden Template Storage -->
+    <textarea id="html-template" class="hidden"></textarea>
+
+    <script>
+        // ==========================================
+        // DEFAULT TEMPLATE 
+        // ==========================================
+        const defaultTemplate = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bully Dailletin | Changelog</title>
+    <script src="https://cdn.tailwindcss.com"><\/script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"><\/script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-10 shadow-sm">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-600 text-white p-1.5 rounded-lg">
+                    <i data-lucide="newspaper" class="w-5 h-5"></i>
+                </div>
+                <h1 class="text-xl font-bold tracking-tight text-slate-900">Bully Dailletin</h1>
+            </div>
+            <div class="text-sm font-medium text-slate-500">
+                Latest: <span id="latest-version" class="text-blue-600">...</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="mb-10 text-center sm:text-left sm:flex sm:items-end sm:justify-between">
+                <div>
+                    <h2 class="text-3xl font-bold text-slate-900">Changelog</h2>
+                    <p class="mt-2 text-slate-500">Track all the latest updates, improvements, and fixes.</p>
+                </div>
+                <div class="mt-4 sm:mt-0 flex gap-2 overflow-x-auto pb-2 sm:pb-0 no-scrollbar">
+                    <button onclick="renderChangelog('all')" class="filter-btn active px-3 py-1.5 text-xs font-semibold rounded-full bg-slate-900 text-white transition-colors hover:bg-slate-700">All</button>
+                    <button onclick="renderChangelog('major')" class="filter-btn px-3 py-1.5 text-xs font-medium rounded-full bg-white border border-slate-200 text-slate-600 hover:border-blue-500 hover:text-blue-600 transition-colors">Major</button>
+                    <button onclick="renderChangelog('minor')" class="filter-btn px-3 py-1.5 text-xs font-medium rounded-full bg-white border border-slate-200 text-slate-600 hover:border-blue-500 hover:text-blue-600 transition-colors">Minor</button>
+                </div>
+            </div>
+            <div id="changelog-container" class="relative border-l border-slate-200 ml-3 sm:ml-4 space-y-12 pb-10"></div>
+            <div id="empty-state" class="hidden text-center py-20">
+                <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-100 mb-4">
+                    <i data-lucide="search-x" class="w-6 h-6 text-slate-400"></i>
+                </div>
+                <h3 class="text-lg font-medium text-slate-900">No updates found</h3>
+                <p class="text-slate-500">Try adjusting your filters.</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-8">
+        <div class="max-w-3xl mx-auto px-4 text-center">
+            <p class="text-sm text-slate-400">&copy; 2024 Bully Dailletin. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        const changelogData = [/* DATA_PLACEHOLDER */];
+        
+        const badges = {
+            added:    { bg: "bg-emerald-100", text: "text-emerald-700", label: "New" },
+            fixed:    { bg: "bg-blue-100",    text: "text-blue-700",    label: "Fixed" },
+            changed:  { bg: "bg-amber-100",   text: "text-amber-700",   label: "Changed" },
+            removed:  { bg: "bg-red-100",     text: "text-red-700",     label: "Removed" },
+            improved: { bg: "bg-violet-100",  text: "text-violet-700",  label: "Improved" }
+        };
+
+        const container = document.getElementById('changelog-container');
+        const emptyState = document.getElementById('empty-state');
+        const latestVersionSpan = document.getElementById('latest-version');
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if(changelogData.length > 0) {
+                latestVersionSpan.textContent = \`v\${changelogData[0].version}\`;
+            }
+            renderChangelog('all');
+            lucide.createIcons();
+        });
+
+        function renderChangelog(filterType) {
+            container.innerHTML = '';
+            const filteredData = filterType === 'all' 
+                ? changelogData 
+                : changelogData.filter(item => item.type === filterType);
+
+            if (filteredData.length === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.className = "filter-btn px-3 py-1.5 text-xs font-medium rounded-full bg-white border border-slate-200 text-slate-600 hover:border-blue-500 hover:text-blue-600 transition-colors cursor-pointer";
+                if (btn.innerText.toLowerCase() === filterType || (filterType === 'all' && btn.innerText === 'All')) {
+                    btn.className = "filter-btn px-3 py-1.5 text-xs font-semibold rounded-full bg-slate-900 text-white transition-colors cursor-pointer shadow-sm";
+                }
+            });
+
+            filteredData.forEach(log => {
+                const logItem = document.createElement('div');
+                logItem.className = 'relative pl-8 sm:pl-10 group';
+                const dateObj = new Date(log.date);
+                const dateStr = dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                
+                let changesHtml = '';
+                log.changes.forEach(change => {
+                    const badgeConfig = badges[change.type] || { bg: "bg-slate-100", text: "text-slate-600", label: change.type };
+                    changesHtml += \`
+                        <li class="flex items-start gap-3 text-sm">
+                            <span class="flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium \${badgeConfig.bg} \${badgeConfig.text}">
+                                \${badgeConfig.label}
+                            </span>
+                            <span class="text-slate-600 leading-relaxed pt-0.5">\${change.text}</span>
+                        </li>
+                    \`;
+                });
+
+                const descHtml = log.description 
+                    ? \`<p class="text-slate-500 mb-4 text-sm leading-relaxed border-b border-slate-100 pb-4">\${log.description}</p>\` 
+                    : '';
+
+                logItem.innerHTML = \`
+                    <div class="absolute -left-[5px] top-1.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-blue-600 ring-4 ring-slate-50"></div>
+                    <div class="flex flex-col sm:flex-row sm:items-baseline sm:justify-between mb-2">
+                        <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                            \${log.title || 'Update'}
+                            <span class="text-sm font-normal text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">v\${log.version}</span>
+                        </h3>
+                        <time class="text-xs font-medium text-slate-400 mt-1 sm:mt-0 uppercase tracking-wide">\${dateStr}</time>
+                    </div>
+                    <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow duration-200">
+                        \${descHtml}
+                        <ul class="space-y-3">
+                            \${changesHtml}
+                        </ul>
+                    </div>
+                \`;
+                container.appendChild(logItem);
+            });
+            lucide.createIcons();
+        }
+    <\/script>
+</body>
+</html>`;
+
+        // ==========================================
+        // APP STATE
+        // ==========================================
+        let appData = [];
+        let currentTemplate = defaultTemplate;
+        let selectedVersionIndex = -1;
+
+        const demoData = [
+            {
+                version: "1.0.0",
+                date: new Date().toISOString().split('T')[0],
+                type: "major",
+                title: "Initial Release",
+                description: "The first version of our project.",
+                changes: [
+                    { type: "added", text: "Project launch" }
+                ]
+            }
+        ];
+
+        // ==========================================
+        // IMPORT / EXPORT LOGIC
+        // ==========================================
+
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                parseHTML(content);
+            };
+            reader.readAsText(file);
+        });
+
+        function createNew() {
+            if(confirm("Start a new changelog? Unsaved changes will be lost.")) {
+                appData = JSON.parse(JSON.stringify(demoData)); 
+                currentTemplate = defaultTemplate;
+                selectedVersionIndex = 0;
+                renderSidebar();
+                loadEditor(0);
+            }
+        }
+
+        function parseHTML(html) {
+            try {
+                const dataStartMarker = "const changelogData = [";
+                const dataStartIndex = html.indexOf(dataStartMarker);
+                
+                if (dataStartIndex === -1) throw new Error("Could not find data array.");
+                let dataEndIndex = html.indexOf("];", dataStartIndex);
+                if (dataEndIndex === -1) throw new Error("Could not find closing bracket.");
+                
+                const arrayString = html.substring(dataStartIndex + dataStartMarker.length - 1, dataEndIndex + 1);
+                const parsedData = new Function("return " + arrayString)();
+                
+                if (!Array.isArray(parsedData)) throw new Error("Parsed data is not an array.");
+
+                appData = parsedData;
+                currentTemplate = html; 
+
+                // Load first item
+                selectedVersionIndex = 0;
+                renderSidebar();
+                loadEditor(0);
+                alert("Import successful!");
+
+            } catch (err) {
+                console.error(err);
+                alert("Error parsing HTML file. " + err.message);
+            }
+        }
+
+        function exportHTML() {
+            const jsonString = JSON.stringify(appData, null, 4);
+            const regex = /const changelogData = \[([\s\S]*?)\];/;
+            
+            let newHTML = "";
+            if (currentTemplate.includes("/* DATA_PLACEHOLDER */")) {
+                newHTML = currentTemplate.replace(
+                    /const changelogData = \[\/\* DATA_PLACEHOLDER \*\/\];/, 
+                    `const changelogData = ${jsonString};`
+                );
+            } else {
+                newHTML = currentTemplate.replace(regex, `const changelogData = ${jsonString};`);
+            }
+
+            const blob = new Blob([newHTML], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'changelog.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // ==========================================
+        // UI RENDERING & VIEW SWITCHING
+        // ==========================================
+
+        const sidebar = document.getElementById('sidebar');
+        const editorPanel = document.getElementById('editor-panel');
+
+        function showEditor() {
+            // For mobile: Hide sidebar, show editor
+            sidebar.classList.add('-translate-x-full');
+            editorPanel.classList.remove('translate-x-full');
+        }
+
+        function showList() {
+            // For mobile: Show sidebar, hide editor
+            sidebar.classList.remove('-translate-x-full');
+            editorPanel.classList.add('translate-x-full');
+        }
+
+        function renderSidebar() {
+            const list = document.getElementById('versions-list');
+            list.innerHTML = '';
+
+            appData.forEach((ver, index) => {
+                const itemContainer = document.createElement('div');
+                itemContainer.className = "flex items-stretch mb-2 gap-1 px-1";
+
+                const isSelected = index === selectedVersionIndex;
+                
+                // MAIN SELECTION BUTTON
+                const btn = document.createElement('button');
+                btn.className = `flex-grow text-left p-3 rounded-lg flex flex-col gap-1 transition-all border ${
+                    isSelected 
+                    ? 'bg-blue-50 border-blue-200 shadow-sm ring-1 ring-blue-200' 
+                    : 'bg-white border-transparent hover:bg-slate-50 hover:border-slate-200 border-slate-100 shadow-sm'
+                }`;
+                btn.onclick = () => loadEditor(index);
+
+                btn.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-sm ${isSelected ? 'text-blue-700' : 'text-slate-700'}">v${ver.version}</span>
+                        <span class="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${getTypeColor(ver.type)}">${ver.type}</span>
+                    </div>
+                    <span class="text-xs text-slate-500 truncate w-full block">${ver.title || 'Untitled'}</span>
+                    <span class="text-[10px] text-slate-400">${ver.date}</span>
+                `;
+                
+                // ORDER CONTROLS
+                const controls = document.createElement('div');
+                controls.className = "flex flex-col gap-1 justify-center";
+                
+                const upBtn = document.createElement('button');
+                upBtn.className = "p-1 bg-white border border-slate-100 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded shadow-sm disabled:opacity-30 disabled:cursor-not-allowed";
+                upBtn.innerHTML = '<i data-lucide="chevron-up" class="w-3 h-3"></i>';
+                upBtn.disabled = index === 0;
+                upBtn.onclick = (e) => { e.stopPropagation(); moveVersion(index, -1); };
+
+                const downBtn = document.createElement('button');
+                downBtn.className = "p-1 bg-white border border-slate-100 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded shadow-sm disabled:opacity-30 disabled:cursor-not-allowed";
+                downBtn.innerHTML = '<i data-lucide="chevron-down" class="w-3 h-3"></i>';
+                downBtn.disabled = index === appData.length - 1;
+                downBtn.onclick = (e) => { e.stopPropagation(); moveVersion(index, 1); };
+
+                controls.appendChild(upBtn);
+                controls.appendChild(downBtn);
+
+                itemContainer.appendChild(btn);
+                itemContainer.appendChild(controls);
+                list.appendChild(itemContainer);
+            });
+            lucide.createIcons();
+        }
+
+        function moveVersion(index, direction) {
+            const newIndex = index + direction;
+            if (newIndex < 0 || newIndex >= appData.length) return;
+
+            // Swap in Array
+            const temp = appData[index];
+            appData[index] = appData[newIndex];
+            appData[newIndex] = temp;
+
+            // Maintain selection if moving the selected item
+            if (selectedVersionIndex === index) {
+                selectedVersionIndex = newIndex;
+            } else if (selectedVersionIndex === newIndex) {
+                selectedVersionIndex = index;
+            }
+
+            renderSidebar();
+        }
+
+        function getTypeColor(type) {
+            switch(type) {
+                case 'major': return 'bg-white border border-slate-200 text-slate-600';
+                case 'minor': return 'bg-slate-100 text-slate-600';
+                default: return 'bg-slate-50 text-slate-400';
+            }
+        }
+
+        function loadEditor(index) {
+            selectedVersionIndex = index;
+            const data = appData[index];
+            
+            // Show Editor Panel (Mobile transition)
+            showEditor();
+
+            // Toggle visibility classes for desktop placeholder
+            document.getElementById('no-selection').classList.remove('md:flex');
+            document.getElementById('no-selection').classList.add('hidden');
+            
+            document.getElementById('edit-form').classList.remove('hidden');
+            document.getElementById('edit-form').classList.add('block');
+            
+            // Highlight Sidebar
+            renderSidebar();
+
+            // Populate Fields
+            document.getElementById('inp-version').value = data.version || '';
+            document.getElementById('inp-date').value = data.date || '';
+            document.getElementById('inp-type').value = data.type || 'patch';
+            document.getElementById('inp-title').value = data.title || '';
+            document.getElementById('inp-desc').value = data.description || '';
+
+            renderChangesList();
+        }
+
+        // Field Listeners
+        ['inp-version', 'inp-date', 'inp-type', 'inp-title', 'inp-desc'].forEach(id => {
+            document.getElementById(id).addEventListener('input', (e) => {
+                if (selectedVersionIndex === -1) return;
+                
+                const field = id.replace('inp-', ''); 
+                const val = e.target.value;
+                
+                if (field === 'desc') {
+                    appData[selectedVersionIndex].description = val;
+                } else {
+                    appData[selectedVersionIndex][field] = val;
+                }
+                
+                if (['version', 'title', 'date', 'type'].includes(field)) {
+                    renderSidebar();
+                }
+            });
+        });
+
+        function renderChangesList() {
+            const list = document.getElementById('changes-list');
+            list.innerHTML = '';
+            
+            if (selectedVersionIndex === -1) return;
+            const changes = appData[selectedVersionIndex].changes || [];
+
+            changes.forEach((change, cIndex) => {
+                const row = document.createElement('div');
+                row.className = "flex flex-col sm:flex-row sm:items-start gap-2 bg-slate-50 p-3 rounded-lg border border-slate-100 group relative";
+                
+                row.innerHTML = `
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <select onchange="updateChange(${cIndex}, 'type', this.value)" class="w-full sm:w-28 text-xs font-semibold rounded border-slate-200 py-2 sm:py-1.5 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm">
+                            <option value="added" ${change.type === 'added' ? 'selected' : ''}>Added</option>
+                            <option value="fixed" ${change.type === 'fixed' ? 'selected' : ''}>Fixed</option>
+                            <option value="changed" ${change.type === 'changed' ? 'selected' : ''}>Changed</option>
+                            <option value="removed" ${change.type === 'removed' ? 'selected' : ''}>Removed</option>
+                            <option value="improved" ${change.type === 'improved' ? 'selected' : ''}>Improved</option>
+                        </select>
+                         <button onclick="removeChange(${cIndex})" class="sm:hidden p-2 text-red-500 bg-red-50 rounded">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+
+                    <textarea oninput="updateChange(${cIndex}, 'text', this.value)" rows="1" class="flex-grow text-sm border-slate-200 rounded py-2 px-3 focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 w-full resize-none" placeholder="Describe the change...">${change.text}</textarea>
+                    
+                    <button onclick="removeChange(${cIndex})" class="hidden sm:block flex-none p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors opacity-0 group-hover:opacity-100">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                `;
+                list.appendChild(row);
+            });
+            lucide.createIcons();
+        }
+
+        // ==========================================
+        // CRUD ACTIONS
+        // ==========================================
+
+        function addVersion() {
+            const newVer = {
+                version: "0.0.1",
+                date: new Date().toISOString().split('T')[0],
+                type: "patch",
+                title: "New Update",
+                description: "",
+                changes: [{ type: "added", text: "New feature" }]
+            };
+            appData.unshift(newVer);
+            loadEditor(0);
+        }
+
+        function deleteCurrentVersion() {
+            if (selectedVersionIndex === -1) return;
+            if(confirm("Delete this version?")) {
+                appData.splice(selectedVersionIndex, 1);
+                selectedVersionIndex = -1;
+                
+                showList();
+                
+                document.getElementById('edit-form').classList.remove('block');
+                document.getElementById('edit-form').classList.add('hidden');
+                document.getElementById('no-selection').classList.remove('hidden');
+                document.getElementById('no-selection').classList.add('md:flex');
+                
+                renderSidebar();
+            }
+        }
+
+        function addChangeItem() {
+            if (selectedVersionIndex === -1) return;
+            if (!appData[selectedVersionIndex].changes) appData[selectedVersionIndex].changes = [];
+            
+            appData[selectedVersionIndex].changes.push({ type: 'added', text: '' });
+            renderChangesList();
+        }
+
+        function updateChange(cIndex, field, value) {
+            if (selectedVersionIndex === -1) return;
+            appData[selectedVersionIndex].changes[cIndex][field] = value;
+        }
+
+        function removeChange(cIndex) {
+            if (selectedVersionIndex === -1) return;
+            appData[selectedVersionIndex].changes.splice(cIndex, 1);
+            renderChangesList();
+        }
+
+        if (appData.length === 0) createNew();
+        lucide.createIcons();
+
+    </script>
+</body>
+</html>

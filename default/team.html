@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deadibone Productions - Company Structure</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* Slate 50 */
+        }
+
+        /* --- Tree Logic (Desktop Only) --- */
+        @media (min-width: 1024px) {
+            .tree ul {
+                padding-top: 20px; 
+                position: relative;
+                transition: all 0.5s;
+                display: flex;
+                justify-content: center;
+            }
+
+            .tree li {
+                float: left; 
+                text-align: center;
+                list-style-type: none;
+                position: relative;
+                padding: 20px 10px 0 10px;
+                transition: all 0.5s;
+            }
+
+            /* We will use ::before and ::after to draw the connectors */
+            .tree li::before, .tree li::after {
+                content: '';
+                position: absolute; 
+                top: 0; 
+                right: 50%;
+                border-top: 2px solid #94a3b8; /* Slate 400 */
+                width: 50%; 
+                height: 20px;
+            }
+
+            .tree li::after {
+                right: auto; 
+                left: 50%;
+                border-left: 2px solid #94a3b8;
+            }
+
+            /* We need to remove left-right connectors from elements without any siblings */
+            .tree li:only-child::after, .tree li:only-child::before {
+                display: none;
+            }
+
+            /* Remove space from the top of single children */
+            .tree li:only-child { 
+                padding-top: 0;
+            }
+
+            /* Remove left connector from first child and right connector from last child */
+            .tree li:first-child::before, .tree li:last-child::after {
+                border: 0 none;
+            }
+
+            /* Adding back the vertical connector to the last nodes */
+            .tree li:last-child::before{
+                border-right: 2px solid #94a3b8;
+                border-radius: 0 5px 0 0;
+            }
+            .tree li:first-child::after{
+                border-radius: 5px 0 0 0;
+            }
+
+            /* Time to add downward connectors from parents */
+            .tree ul ul::before{
+                content: '';
+                position: absolute; 
+                top: 0; 
+                left: 50%;
+                border-left: 2px solid #94a3b8;
+                width: 0; 
+                height: 20px;
+            }
+        }
+
+        /* --- Mobile Logic --- */
+        @media (max-width: 1023px) {
+            .tree ul {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                padding-left: 0;
+            }
+            .tree li {
+                list-style-type: none;
+                position: relative;
+                padding-top: 20px;
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+            /* Add a simple line for mobile hierarchy */
+            .tree li::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                height: 20px;
+                border-left: 2px solid #cbd5e1;
+            }
+            /* Hide top line for very first item */
+            .tree > ul > li::before {
+                display: none;
+            }
+        }
+
+        /* --- Card Styling --- */
+        .org-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            padding: 16px;
+            border-radius: 12px;
+            display: inline-block;
+            min-width: 180px;
+            max-width: 220px;
+            position: relative;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border-top: 4px solid #2563eb; /* Blue Accent */
+            z-index: 10;
+        }
+
+        .org-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.2);
+            border-color: #3b82f6;
+        }
+
+        .role-badge {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #2563eb;
+            font-weight: 700;
+            margin-bottom: 4px;
+            display: block;
+        }
+        
+        .name-text {
+            font-weight: 700;
+            color: #1e293b;
+            font-size: 1.1rem;
+        }
+
+        .icon-circle {
+            width: 40px;
+            height: 40px;
+            background-color: #eff6ff;
+            color: #2563eb;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px auto;
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                    D
+                </div>
+                <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Deadibone <span class="text-blue-600">Productions</span></h1>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-12">
+        
+        <!-- SECTION 1: CORE TEAM -->
+        <div class="mb-20">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-bold text-slate-800">Core Team</h2>
+                <p class="text-slate-500 mt-2">The foundation of our operations.</p>
+                <div class="h-1 w-20 bg-blue-600 mx-auto mt-4 rounded-full"></div>
+            </div>
+
+            <div class="tree">
+                <ul>
+                    <!-- ROOT -->
+                    <li>
+                        <div class="org-card">
+                            <div class="icon-circle"><i class="fa-solid fa-crown"></i></div>
+                            <span class="role-badge">Founder & Director</span>
+                            <div class="name-text">Ethan</div>
+                        </div>
+                        
+                        <!-- CHILDREN -->
+                        <ul>
+                            <li>
+                                <div class="org-card">
+                                    <div class="icon-circle"><i class="fa-solid fa-briefcase"></i></div>
+                                    <span class="role-badge">Head of Product</span>
+                                    <div class="name-text">Rex</div>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="org-card">
+                                    <div class="icon-circle"><i class="fa-solid fa-users"></i></div>
+                                    <span class="role-badge">Head of Community</span>
+                                    <div class="name-text">Hayley</div>
+                                </div>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- SECTION 2: UGA SUITE TEAM -->
+        <div>
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-bold text-slate-800">UGA Suite Team</h2>
+                <p class="text-slate-500 mt-2">Product development and creative production.</p>
+                <div class="h-1 w-20 bg-blue-600 mx-auto mt-4 rounded-full"></div>
+            </div>
+
+            <div class="tree">
+                <ul>
+                    <!-- ROOT -->
+                    <li>
+                        <div class="org-card">
+                            <div class="icon-circle"><i class="fa-solid fa-user-tie"></i></div>
+                            <span class="role-badge">Director</span>
+                            <div class="name-text">Ethan</div>
+                        </div>
+
+                        <!-- BRANCHES -->
+                        <ul>
+                            
+                            <!-- BRANCH 1: PRODUCT -->
+                            <li>
+                                <div class="org-card">
+                                    <div class="icon-circle"><i class="fa-solid fa-chart-line"></i></div>
+                                    <span class="role-badge">Product Director</span>
+                                    <div class="name-text">Rex</div>
+                                </div>
+                                <ul>
+                                    <li>
+                                        <div class="org-card">
+                                            <div class="icon-circle"><i class="fa-solid fa-lightbulb"></i></div>
+                                            <span class="role-badge">Ideas Manager</span>
+                                            <div class="name-text">Danny</div>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </li>
+
+                            <!-- BRANCH 2: MULTIMEDIA -->
+                            <li>
+                                <div class="org-card">
+                                    <div class="icon-circle"><i class="fa-solid fa-photo-film"></i></div>
+                                    <span class="role-badge">Multimedia Director</span>
+                                    <div class="name-text">Karissa</div>
+                                </div>
+                                <ul>
+                                    <li>
+                                        <div class="org-card">
+                                            <div class="icon-circle"><i class="fa-solid fa-video"></i></div>
+                                            <span class="role-badge">Video Editor</span>
+                                            <div class="name-text">Anakin</div>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </li>
+
+                            <!-- BRANCH 3: DEVELOPMENT -->
+                            <li>
+                                <div class="org-card">
+                                    <div class="icon-circle"><i class="fa-solid fa-code-branch"></i></div>
+                                    <span class="role-badge">Development Director</span>
+                                    <div class="name-text">Remy</div>
+                                </div>
+                                <ul>
+                                    <li>
+                                        <div class="org-card">
+                                            <div class="icon-circle"><i class="fa-solid fa-terminal"></i></div>
+                                            <span class="role-badge">Lead Programmer</span>
+                                            <div class="name-text">Jaden</div>
+                                        </div>
+                                        <ul>
+                                            <li>
+                                                <div class="org-card">
+                                                    <div class="icon-circle"><i class="fa-solid fa-code"></i></div>
+                                                    <span class="role-badge">Programmer</span>
+                                                    <div class="name-text">Jonas</div>
+                                                </div>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="bg-slate-900 text-slate-400 py-8 mt-12">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p>&copy; 2025 Deadibone Productions. All rights reserved.</p>
+        </div>
+    </footer>
+
+</body>
+</html>

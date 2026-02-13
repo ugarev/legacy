@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Files</title>
+    <!-- Using the same styles as your quiz app -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
+
+        :root {
+            --primary-color: #4A90E2;
+            --secondary-color: #50E3C2;
+            --correct-color: #28a745;
+            --incorrect-color: #dc3545;
+            --warning-color: #db7B2b;
+            --bg-color: #f4f7f9;
+            --text-color: #333;
+            --white: #FFFFFF;
+            --light-gray: #f8f9fa;
+            --border-color: #dee2e6;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align to top */
+            min-height: 100vh;
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 900px;
+            background-color: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            margin-top: 20px; /* Add margin to the top */
+        }
+
+        .card {
+            padding: 30px 35px;
+        }
+        
+        .card-title {
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 25px;
+            border-bottom: 2px solid var(--bg-color);
+            padding-bottom: 15px;
+        }
+
+        /* New Styles for File Browser */
+        
+        .file-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .file-item {
+            margin-bottom: 12px;
+        }
+
+        .file-link {
+            display: flex;
+            align-items: center;
+            padding: 14px 18px;
+            background-color: var(--light-gray);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--primary-color);
+            font-weight: 700;
+            transition: background-color 0.2s, box-shadow 0.2s;
+            font-size: 1.1rem;
+        }
+
+        .file-link:hover {
+            background-color: #e9ecef;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            color: #3a7bc2; /* Darker blue on hover */
+        }
+
+        .file-icon {
+            /* Use width/height on the SVG tag itself for better control */
+            margin-right: 14px;
+            /* Flex shrink 0 prevents the icon from shrinking */
+            flex-shrink: 0; 
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div class="card">
+            <h1 class="card-title">Files</h1>
+            
+            <ul id="file-list" class="file-list">
+                <!-- File items will be dynamically inserted here -->
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            
+            // --- Modular File Array ---
+            // Just modify this array to add, remove, or change files.
+            const filePaths = [
+                "2324_c卷_1a_23-24 s1 chist ut1.pdf",
+"2324_t_c卷_1a_23-24 s1 chist ut1(評分參考).pdf",
+"a卷_24-25 s1 ut 1 試題答題卷 1.0 (1).pdf",
+"a卷_ms_24-25 s1 ut 1 試題答題卷 1.0.pdf",
+"s_西周封建制度_備課任務_翻轉課堂工作紙.pdf",
+"題型分佈提要.html"
+            ];
+            // ----------------------------
+
+            const fileListContainer = document.getElementById('file-list');
+            
+            // This SVG icon will be reused for each file link
+            const fileIconSvg = `
+                <svg class="file-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24px" height="24px">
+                  <path d="M6 2c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6H6zm7 7V3.5L18.5 9H13z"/>
+                </svg>
+            `;
+
+            // 1. Process the file paths into objects
+            const files = filePaths.map(path => {
+                return {
+                    path: path,
+                    // Get the file name by splitting at the last '/'
+                    name: path.split('/').pop() 
+                };
+            });
+
+            // 2. Sort the files alphabetically by name, ignoring case
+            files.sort((a, b) => {
+                return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+            });
+
+            // 3. Generate the HTML for the file list
+            let htmlContent = '';
+            files.forEach(file => {
+                // Using target="_blank" to open files in a new tab
+                htmlContent += `
+                    <li class="file-item">
+                        <a href="https://cdn-ugarev.netlify.app/s1/ch/ut1/${file.path}" class="file-link" target="_blank" rel="noopener noreferrer">
+                            ${fileIconSvg}
+                            <span>${file.name}</span>
+                        </a>
+                    </li>
+                `;
+            });
+
+            // 4. Populate the container with the generated HTML
+            fileListContainer.innerHTML = htmlContent;
+        });
+    </script>
+</body>
+</html>

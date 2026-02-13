@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SC UT 1</title>
+    <link rel="icon" type="image/x-icon" href="../../icon.png">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
+
+        :root {
+            --primary-color: #4A90E2;
+            --secondary-color: #50E3C2;
+            --correct-color: #28a745;
+            --incorrect-color: #dc3545;
+            --warning-color: #db7B2b;
+            --bg-color: #f4f7f9;
+            --text-color: #333;
+            --white: #FFFFFF;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 900px;
+            background-color: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            text-align: center;
+        }
+
+        #start-screen, #end-screen {
+            padding: 50px;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        #start-screen p {
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+        }
+
+        #start-button, .restart-button {
+            background-color: var(--primary-color);
+            color: var(--white);
+            border: none;
+            padding: 15px 35px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        #start-button:hover, .restart-button:hover {
+            background-color: #357ABD;
+            transform: translateY(-2px);
+        }
+
+        #quiz-screen {
+            display: none;
+        }
+
+        #header {
+            padding: 20px 30px;
+            background-color: var(--primary-color);
+            color: var(--white);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #header div {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        #question-container {
+            padding: 30px 40px;
+        }
+
+        #question-text {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 25px;
+            min-height: 70px;
+            line-height: 1.5;
+        }
+
+        #timer {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            background-color: #eef5ff;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 20px;
+            border: 4px solid var(--primary-color);
+            transition: all 0.3s;
+        }
+
+        #timer.warning {
+            color: var(--incorrect-color);
+            border-color: var(--incorrect-color);
+        }
+
+        #options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        /* 長問答輸入框 */
+        #long-answer-container {
+            display: none;
+            margin-top: 20px;
+        }
+        
+        #long-answer-input {
+            width: 90%;
+            height: 120px;
+            font-size: 1rem;
+            font-family: 'Noto Sans TC', sans-serif;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+        }
+        
+        #submit-long-answer {
+            background-color: var(--secondary-color);
+            color: var(--white);
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        
+        #submit-long-answer:hover {
+            background-color: #40B89F;
+            transform: translateY(-2px);
+        }
+        
+        #submit-long-answer:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .option-button {
+            background-color: var(--white);
+            border: 2px solid #ddd;
+            color: var(--text-color);
+            padding: 20px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 60px;
+        }
+
+        .option-button:hover:not(:disabled) {
+            background-color: #f0f5ff;
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .option-button.correct {
+            background-color: var(--correct-color);
+            border-color: var(--correct-color);
+            color: var(--white);
+        }
+
+        .option-button.incorrect {
+            background-color: var(--incorrect-color);
+            border-color: var(--incorrect-color);
+            color: var(--white);
+        }
+
+        .option-button:disabled {
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+
+        #feedback-container {
+            margin-top: 20px;
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #feedback {
+            font-size: 1.3rem;
+            font-weight: 700;
+            text-align: left;
+            padding: 0 10px;
+        }
+        
+        #feedback-answer {
+            font-size: 1rem;
+            font-weight: 400;
+            color: #555;
+            margin-top: 10px;
+            text-align: left;
+            padding: 0 10px;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        #next-button {
+            background-color: var(--secondary-color);
+            color: var(--white);
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+            display: none;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        #next-button:hover {
+            background-color: #40B89F;
+            transform: translateY(-2px);
+        }
+
+        #end-screen {
+            display: none;
+        }
+
+        #final-score {
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            font-weight: 700;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+
+        <div id="start-screen">
+            <h1>S1 Science UT 1</h1>
+            <h2>The Challenge</h2>
+            <p>Presented by Deadibone Productions</p>
+            <button id="start-button">Start</button>
+        </div>
+
+        <div id="quiz-screen">
+            <div id="header">
+                <div id="question-counter">Question 1 / 10</div>
+                <div id="score">Score: 0 / 20</div>
+            </div>
+            <div id="question-container">
+                <div id="timer">15</div>
+                <div id="question-text">This is the question...</div>
+                
+                <div id="options-grid">
+                    </div>
+                
+                <div id="long-answer-container">
+                    <textarea id="long-answer-input" placeholder="Type your answer here..."></textarea>
+                    <button id="submit-long-answer">Submit</button>
+                </div>
+                
+                <div id="feedback-container">
+                    <div id="feedback"></div>
+                    <div id="feedback-answer"></div> <button id="next-button">Next</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="end-screen">
+            <h1>Challenge done!</h1>
+            <div id="final-score">Your total score: 0 / 20</div>
+            <p>Practice makes perfect, keep revising!</p>
+            <button class="restart-button">Try again</button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- NEW: COOKIE HELPER FUNCTIONS ---
+        // (Copied from index.html)
+        function setCookie(name, value, days) {
+            let expires = "";
+            if (days) {
+                const date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + (value || "") + expires + "; path=/; SameSite=Lax";
+        }
+
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+        // --- END COOKIE FUNCTIONS ---
+
+        const allQuestions = [
+    // *** LONG ANSWER QUESTIONS (2/1/0 Scoring) - Scientific Method & Investigation ***
+    { 
+        time: 75, 
+        type: "long",
+        question: "List the five main sequential steps of a scientific investigation, starting from the beginning.", 
+        fullMarkKeys: ["observation", "background research", "hypothesis", "experiment", "analysis", "conclusion"], // Must include the 5 core steps
+        partialMarkKeys: ["observation", "hypothesis", "experiment", "conclusion"], // 1 point for at least 3 correct in order/concept
+        feedback: "Reference Answer (2 points): The five steps are: 1. Making **Observations** and asking questions, 2. Doing **Background Research**, 3. Proposing a **Hypothesis**, 4. Designing and conducting **Experiments**, and 5. **Analysing** results and drawing a **Conclusion**."
+    },
+    { 
+        time: 90, 
+        type: "long",
+        question: "A student hypothesises: 'Ice melts faster in salt water than in fresh water.' Identify the Independent Variable (IV), Dependent Variable (DV), and one vital Controlled Variable (CV).", 
+        fullMarkKeys: ["IV: type of water", "DV: time to melt", "CV: volume of water"], // Accept variants like 'salt/fresh water', 'time taken to melt', 'size of ice'
+        partialMarkKeys: ["IV:", "DV:", "CV:"], // 1 point for correctly identifying two of the three variables
+        feedback: "Reference Answer (2 points): **Independent Variable (IV):** The type of water (salt water vs. fresh water). **Dependent Variable (DV):** The time needed for the ice to melt. **Controlled Variable (CV):** Examples include: Volume/amount of water, initial temperature of the water, or volume/shape of the ice."
+    },
+    { 
+        time: 75, 
+        type: "long",
+        question: "What is the key difference between a scientific **discovery** and an **invention**?", 
+        fullMarkKeys: ["invention is new", "discovery already exists", "created vs found"], 
+        partialMarkKeys: ["invention new", "discovery find"], // 1 point for defining one term correctly
+        feedback: "Reference Answer (2 points): A **discovery** is something that already **exists** but was not previously known (e.g., finding a new planet). An **invention** is something **new** and useful that is **created** from scientific discoveries (e.g., the smartphone)."
+    },
+    { 
+        time: 75, 
+        type: "long",
+        question: "Explain what Parallax Error is, and state the technique used to avoid it when reading a measuring cylinder.", 
+        fullMarkKeys: ["reading from wrong angle", "read at eye level", "bottom of the meniscus"], 
+        partialMarkKeys: ["wrong angle", "eye level"], // 1 point for identifying the cause OR the correct technique
+        feedback: "Reference Answer (2 points): Parallax error occurs when the measurement is read from a **wrong angle/position**. To avoid it, you must **read the measurement at eye level**, focusing on the **bottom of the meniscus** (the curved liquid surface)."
+    },
+    { 
+        time: 75, 
+        type: "long",
+        question: "List the three components required to start a fire, according to the 'Fire Triangle'.", 
+        fullMarkKeys: ["fuel", "oxygen", "high temperature", "heat"], // Must include all 3
+        partialMarkKeys: ["fuel", "oxygen", "high temperature", "heat"], // 1 point for at least 2 correct
+        feedback: "Reference Answer (2 points): The three components of the Fire Triangle are **Fuel**, **Oxygen**, and **High Temperature** (Heat)."
+    },
+    { 
+        time: 75, 
+        type: "long",
+        question: "A student records the following times for a reaction: 23.0s, 21.8s, 22.2s, 3.5s, and 22.6s. Identify the **outlier** and calculate the **correct average time** (to 1 d.p.).", 
+        fullMarkKeys: ["outlier: 3.5", "average: 22.4"], // Must have both
+        partialMarkKeys: ["3.5", "outlier"], // 1 point for just identifying the outlier
+        feedback: "Reference Answer (2 points): The **outlier** is **3.5s**, as it is far from the other values. You must ignore it. The correct average is (23.0 + 21.8 + 22.2 + 22.6) / 4 = 89.6 / 4 = **22.4s**."
+    },
+    { 
+        time: 60, 
+        type: "long",
+        question: "Describe the immediate safety procedure you must take if a corrosive chemical is splashed onto your bare skin.", 
+        fullMarkKeys: ["wash with running water", "running water"], 
+        partialMarkKeys: ["wash", "tell teacher"], // 1 point for mentioning to wash or telling the teacher
+        feedback: "Reference Answer (2 points): You must immediately **wash the affected area slowly with running water** and inform your teacher."
+    },
+    { 
+        time: 75, 
+        type: "long",
+        question: "List the first 3 essential steps for lighting a Bunsen burner, starting from a safety check.", 
+        fullMarkKeys: ["check tubing", "air hole closed", "light match"], // Must include these 3 concepts
+        partialMarkKeys: ["air hole closed", "check tubing", "light match"], // 1 point for at least 2
+        feedback: "Reference Answer (2 points): 1. Check tubing is connected and place the burner on a heat-proof mat. 2. Ensure the **air hole is CLOSED**. 3. **Light a match** (and hold it above the chimney *before* turning on the gas)."
+    },
+    { 
+        time: 60, 
+        type: "long",
+        question: "A 'good' hypothesis must be testable. What are two other characteristics of a good hypothesis?", 
+        fullMarkKeys: ["measurable", "based on information", "based on observation"], 
+        partialMarkKeys: ["measurable", "based on information", "based on observation"], // 1 point for one correct
+        feedback: "Reference Answer (2 points): A good hypothesis must be: 1. Based on information/observations, 2. **Testable**, and 3. **Measurable**."
+    },
+    { 
+        time: 75, 
+        type: "long",
+        question: "Explain the difference between **Accuracy** and **Precision** in measurement.", 
+        fullMarkKeys: ["accuracy: close to true value", "precision: close to each other"], 
+        partialMarkKeys: ["accuracy", "precision"], // 1 point for defining one correctly
+        feedback: "Reference Answer (2 points): **Accuracy** is how close a measured value is to the **true value**. **Precision** is how close a set of measured values are **to each other**."
+    },
+
+
+    // --- MULTIPLE CHOICE QUESTIONS (MCQ) - Measurement, Safety, & Investigation ---
+    { 
+        time: 20, 
+        question: "Which term is used to describe how close a set of measured values are to *each other*?", 
+        correctAnswer: "Precision", 
+        incorrectAnswers: ["Accuracy", "Resolution", "Outlier"],
+        feedback: "Precision refers to how close measurements are to each other, while Accuracy refers to how close they are to the true value." 
+    },
+    { 
+        time: 20, 
+        question: "When measuring the volume of a liquid, what conversion is correct?", 
+        correctAnswer: "$1\\text{ mL} = 1\\text{ cm}^{3}$", 
+        incorrectAnswers: ["$1\\text{ mL} = 1\\text{ L}$", "$1\\text{ m}^{3} = 100\\text{ L}$", "$1\\text{ L} = 100\\text{ cm}^{3}$"],
+        feedback: "The units millilitre (mL) and cubic centimetre (cm³ or cc) are equivalent." 
+    },
+    { 
+        time: 25, 
+        question: "Which of the following is an example of a **zero error**?", 
+        correctAnswer: "A ruler's end is chipped, making the starting mark at $0.2\\text{ cm}$ instead of $0.0\\text{ cm}$.", 
+        incorrectAnswers: ["Reading the measurement from a side angle.", "The reading falls between the markings of the instrument.", "A student takes too long to stop the stopwatch."],
+        feedback: "A zero error is when the tool does not read zero when it is not measuring anything." 
+    },
+    { 
+        time: 15, 
+        question: "Which factor must be kept unchanged to ensure an experiment is a 'fair test'?", 
+        correctAnswer: "Controlled Variable", 
+        incorrectAnswers: ["Independent Variable", "Dependent Variable", "Outlier"],
+        feedback: "The Controlled Variables are all the factors kept the same to ensure only the Independent Variable affects the Dependent Variable." 
+    },
+    { 
+        time: 20, 
+        question: "Which type of Bunsen flame is yellow, irregular in shape, and produces soot?", 
+        correctAnswer: "Luminous flame", 
+        incorrectAnswers: ["Non-luminous flame", "Non-sooty flame", "Blue cone flame"],
+        feedback: "The luminous (yellow) flame occurs when the air hole is closed. It is cooler and not used for heating." 
+    },
+    { 
+        time: 20, 
+        question: "Which of the following is NOT a safety rule when working with apparatus in the laboratory?", 
+        correctAnswer: "Smell chemicals directly to identify them.", 
+        incorrectAnswers: ["Wear safety goggles at all times.", "Tie back long hair.", "Do not run or play around the laboratory."],
+        feedback: "You must never smell chemicals directly. All other options are key safety rules." 
+    },
+    { 
+        time: 20, 
+        question: "What is the correct safety procedure for putting out an **oil fire** in the laboratory?", 
+        correctAnswer: "Use a CO₂ or powder extinguisher, or cover the fire.", 
+        incorrectAnswers: ["Pour water onto the burning oil.", "Use a water fire extinguisher.", "Blow on the fire vigorously."],
+        feedback: "NEVER use water on an oil fire. It will vaporise instantly and spread the burning oil." 
+    },
+    { 
+        time: 20, 
+        question: "Which piece of lab safety equipment is specifically designed to remove noxious fumes from an experiment?", 
+        correctAnswer: "Fume cupboard", 
+        incorrectAnswers: ["Fire extinguisher", "Eye wash station", "First aid box"],
+        feedback: "The fume cupboard (or fume hood) has an extractor fan to safely remove dangerous gases." 
+    },
+    { 
+        time: 15, 
+        question: "Organising animals into groups like 'Fish, Birds, and Mammals' is an example of which scientific method?", 
+        correctAnswer: "Classifying", 
+        incorrectAnswers: ["Fair testing", "Hypothesising", "Pattern seeking"],
+        feedback: "Classifying involves organising objects or events into reasonable groups based on their similarities." 
+    },
+    { 
+        time: 20, 
+        question: "Why should you NOT use the same dropper to transfer two different solutions (A and B)?", 
+        correctAnswer: "To prevent contamination of the solutions.", 
+        incorrectAnswers: ["To save time in the experiment.", "To avoid parallax error.", "To make the experiment a fair test."],
+        feedback: "Using the same dropper will contaminate the original solution bottles." 
+    },
+    { 
+        time: 20, 
+        question: "What is the term for the degree of hotness of an object?", 
+        correctAnswer: "Temperature", 
+        incorrectAnswers: ["Mass", "Volume", "Resolution"],
+        feedback: "Temperature is the measure of the degree of hotness." 
+    },
+    { 
+        time: 25, 
+        question: "The observation that ice cream sales and shark attacks increase during the summer demonstrates:", 
+        correctAnswer: "Correlation but not necessarily causation.", 
+        incorrectAnswers: ["Causation, as ice cream sales lead to shark attacks.", "A zero error in the data collection.", "A fair test that proves the relationship."],
+        feedback: "This is a classic example of correlation. Both are caused by a third variable (hot weather), but they do not cause each other." 
+    },
+    { 
+        time: 20, 
+        question: "When an experiment's results do NOT support the hypothesis, what is the correct next step in the scientific method?", 
+        correctAnswer: "Modify the hypothesis and re-test.", 
+        incorrectAnswers: ["Ignore the results and change the data.", "Conclude that the experiment was a failure.", "Stop the investigation immediately."],
+        feedback: "If results do not support the hypothesis, the scientist must modify the hypothesis and design new experiments." 
+    },
+    { 
+        time: 20, 
+        question: "Which of the following is a key rule for drawing a cross-sectional diagram of lab apparatus?", 
+        correctAnswer: "Do not shade the diagram.", 
+        incorrectAnswers: ["Use a blue or black pen for all lines.", "Always draw the apparatus from a 3D perspective.", "Label the apparatus with abbreviations only."],
+        feedback: "Diagrams should be drawn with a sharp pencil, using a ruler for straight lines, and must not be shaded." 
+    },
+    { 
+        time: 20, 
+        question: "Which Bunsen flame is hotter and should be used for heating?", 
+        correctAnswer: "Non-luminous flame", 
+        incorrectAnswers: ["Luminous flame", "Yellow flame", "Sooty flame"],
+        feedback: "The non-luminous (blue) flame is hotter (approx. 900°C) and is used for heating. It is produced when the air hole is open." 
+    }
+];
+        // ----------------------------------------------------
+        // (GAME LOGIC)
+        // ----------------------------------------------------
+        
+        // DOM 
+        const startScreen = document.getElementById('start-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const endScreen = document.getElementById('end-screen');
+        const startButton = document.getElementById('start-button');
+        const restartButtons = document.querySelectorAll('.restart-button');
+        const questionCounter = document.getElementById('question-counter');
+        const timerDisplay = document.getElementById('timer');
+        const scoreDisplay = document.getElementById('score');
+        const questionText = document.getElementById('question-text');
+        const optionsGrid = document.getElementById('options-grid');
+        const feedback = document.getElementById('feedback');
+        const feedbackAnswer = document.getElementById('feedback-answer');
+        const nextButton = document.getElementById('next-button');
+        const finalScore = document.getElementById('final-score');
+        
+        const longAnswerContainer = document.getElementById('long-answer-container');
+        const longAnswerInput = document.getElementById('long-answer-input');
+        const submitLongAnswer = document.getElementById('submit-long-answer');
+
+        // VARS
+        let currentGameQuestions = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let timer;
+        let timeLeft = 15;
+        const TOTAL_SCORE = 20;
+
+        function shuffleArray(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex != 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        function startGame() {
+            const mcQuestions = allQuestions.filter(q => q.type !== 'long');
+            const laQuestions = allQuestions.filter(q => q.type === 'long');
+            
+            const shuffledMC = shuffleArray(mcQuestions).slice(0, 8);
+            const shuffledLA = shuffleArray(laQuestions).slice(0, 2);
+            
+            currentGameQuestions = shuffleArray([...shuffledMC, ...shuffledLA]);
+            
+            currentQuestionIndex = 0;
+            score = 0;
+            startScreen.style.display = 'none';
+            endScreen.style.display = 'none';
+            quizScreen.style.display = 'block';
+            scoreDisplay.textContent = `Score: 0 / ${TOTAL_SCORE}`;
+            
+            showQuestion();
+        }
+
+        function showQuestion() {
+            resetQuestionState();
+            const question = currentGameQuestions[currentQuestionIndex];
+            
+            questionText.textContent = question.question;
+            questionCounter.textContent = `Question ${currentQuestionIndex + 1} / 10`;
+            
+            timeLeft = question.time || 15;
+            timerDisplay.textContent = timeLeft;
+            if (timeLeft > 15) {
+                timerDisplay.style.borderColor = "var(--secondary-color)";
+                timerDisplay.style.color = "var(--secondary-color)";
+            }
+            
+            if (question.type === "long") {
+                optionsGrid.style.display = 'none';
+                longAnswerContainer.style.display = 'block';
+                longAnswerInput.value = '';
+                submitLongAnswer.onclick = submitLongAnswerHandler; 
+            } else {
+                optionsGrid.style.display = 'grid';
+                longAnswerContainer.style.display = 'none';
+                
+                let options = [];
+                if (question.correctAnswer === "True" || question.correctAnswer === "False" || question.correctAnswer === "Not Given") {
+                    options = ["True", "False", "Not Given"];
+                } else {
+                    options = [question.correctAnswer, ...question.incorrectAnswers];
+                }
+                
+                const shuffledOptions = shuffleArray([...options]);
+                
+                optionsGrid.innerHTML = '';
+                
+                if (shuffledOptions.length <= 3) {
+                    optionsGrid.style.gridTemplateColumns = '1fr';
+                } else {
+                    optionsGrid.style.gridTemplateColumns = '1fr 1fr';
+                }
+
+                shuffledOptions.forEach(option => {
+                    const button = document.createElement('button');
+                    button.textContent = option;
+                    button.classList.add('option-button');
+                    button.onclick = selectMCQAnswer; 
+                    optionsGrid.appendChild(button);
+                });
+            }
+            
+            startTimer();
+        }
+
+        function resetQuestionState() {
+            feedback.textContent = '';
+            feedbackAnswer.textContent = '';
+            nextButton.style.display = 'none';
+            timerDisplay.classList.remove('warning');
+            timerDisplay.style.borderColor = "var(--primary-color)";
+            timerDisplay.style.color = "var(--primary-color)";
+            
+            optionsGrid.style.display = 'none';
+            longAnswerContainer.style.display = 'none';
+            
+            document.querySelectorAll('.option-button').forEach(button => {
+                button.disabled = false;
+                button.onclick = null;
+            });
+            longAnswerInput.disabled = false;
+            submitLongAnswer.disabled = false;
+            submitLongAnswer.onclick = null;
+        }
+
+        function startTimer() {
+            timer = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = timeLeft;
+                if (timeLeft <= 5) {
+                    timerDisplay.classList.add('warning');
+                    timerDisplay.style.borderColor = "var(--incorrect-color)";
+                    timerDisplay.style.color = "var(--incorrect-color)";
+                }
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    timeUp();
+                }
+            }, 1000);
+        }
+
+        function timeUp() {
+            clearInterval(timer);
+            feedback.textContent = "Times up! 0 marks";
+            feedback.style.color = "var(--warning-color)";
+            
+            const question = currentGameQuestions[currentQuestionIndex];
+            if (question.type === "long") {
+                feedbackAnswer.textContent = question.feedback; 
+            }
+            
+            disableOptions();
+            showCorrectAnswer();
+            nextButton.style.display = 'block';
+        }
+
+        function selectMCQAnswer(e) {
+            clearInterval(timer);
+            const selectedButton = e.target;
+            const selectedAnswer = selectedButton.textContent;
+            const correctAnswer = currentGameQuestions[currentQuestionIndex].correctAnswer;
+
+            disableOptions();
+
+            if (selectedAnswer === correctAnswer) {
+                score += 2;
+                scoreDisplay.textContent = `Score: ${score} / ${TOTAL_SCORE}`;
+                feedback.textContent = "Correct! +2 marks";
+                feedback.style.color = "var(--correct-color)";
+                selectedButton.classList.add('correct');
+            } else {
+                feedback.textContent = "Incorrect. 0 marks";
+                feedback.style.color = "var(--incorrect-color)";
+                selectedButton.classList.add('incorrect');
+                showCorrectAnswer();
+            }
+            
+            nextButton.style.display = 'block';
+        }
+        
+        function submitLongAnswerHandler() {
+            clearInterval(timer);
+            const userAnswer = longAnswerInput.value;
+            const question = currentGameQuestions[currentQuestionIndex];
+            
+            disableOptions();
+
+            let fullMarkMatchCount = 0;
+            for (const key of question.fullMarkKeys) {
+                if (userAnswer.includes(key)) {
+                    fullMarkMatchCount++;
+                }
+            }
+
+            if (fullMarkMatchCount === question.fullMarkKeys.length) {
+                score += 2;
+                scoreDisplay.textContent = `Score: ${score} / ${TOTAL_SCORE}`;
+                feedback.textContent = "Fully correct! +2 marks";
+                feedback.style.color = "var(--correct-color)";
+            } else {
+                let partialMarkMatchCount = 0;
+                for (const key of question.partialMarkKeys) {
+                    if (userAnswer.includes(key)) {
+                        partialMarkMatchCount++;
+                        break; 
+                    }
+                }
+
+                if (fullMarkMatchCount > 0 || partialMarkMatchCount > 0) {
+                    // --- 1分 ---
+                    score += 1;
+                    scoreDisplay.textContent = `Score: ${score} / ${TOTAL_SCORE}`;
+                    feedback.textContent = "Partially Correct +1 mark";
+                    feedback.style.color = "var(--warning-color)";
+                } else {
+                    // --- 0分 ---
+                    feedback.textContent = "Incorrect. 0 marks";
+                    feedback.style.color = "var(--incorrect-color)";
+                }
+            }
+            
+            feedbackAnswer.textContent = question.feedback; 
+            nextButton.style.display = 'block';
+        }
+
+        function showCorrectAnswer() {
+             const question = currentGameQuestions[currentQuestionIndex];
+             if (question.type !== "long") {
+                const correctAnswer = question.correctAnswer;
+                document.querySelectorAll('.option-button').forEach(button => {
+                    if (button.textContent === correctAnswer) {
+                        button.classList.add('correct');
+                    }
+                });
+             }
+        }
+
+        function disableOptions() {
+            document.querySelectorAll('.option-button').forEach(button => {
+                button.disabled = true;
+                button.onclick = null;
+            });
+            longAnswerInput.disabled = true;
+            submitLongAnswer.disabled = true;
+            submitLongAnswer.onclick = null;
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < currentGameQuestions.length) {
+                showQuestion();
+            } else {
+                showEndScreen();
+            }
+        }
+
+        // --- THIS IS THE MODIFIED FUNCTION ---
+        function showEndScreen() {
+            quizScreen.style.display = 'none';
+            endScreen.style.display = 'block';
+            finalScore.textContent = `Your final score: ${score} / ${TOTAL_SCORE}`;
+            
+            // --- NEW COOKIE LOGIC ---
+            // 1. Get the old score from the cookie
+            const oldScoreStr = getCookie("score");
+            const oldScore = parseInt(oldScoreStr || "0", 10);
+            
+            // 2. Calculate the new total score (old score + score from this game)
+            // 'score' is the variable from this challenge
+            const newTotalScore = oldScore + score; 
+
+            // 3. Save the new total score back to the cookie
+            // Set it for 10 year (3650 days)
+            setCookie("score", newTotalScore, 3650);
+            
+            console.log(`Old score: ${oldScore}, Score from this game: ${score}, New total score: ${newTotalScore}`);
+            // --- END NEW LOGIC ---
+        }
+        // --- END MODIFIED FUNCTION ---
+
+
+        startButton.addEventListener('click', startGame);
+        nextButton.addEventListener('click', nextQuestion);
+        restartButtons.forEach(button => button.addEventListener('click', startGame));
+        
+    </script>
+</body>
+</html>

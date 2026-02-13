@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UGA Rev</title>
+    <link rel="icon" type="image/x-icon" href="icon.png">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
+
+        /* Theme variables from provided files */
+        :root {
+            --primary-color: #4A90E2;
+            --secondary-color: #50E3C2;
+            --correct-color: #28a745;
+            --incorrect-color: #dc3545;
+            --warning-color: #db7B2b;
+            --bg-color: #f4f7f9;
+            --text-color: #333;
+            --white: #FFFFFF;
+            --grey-text: #777;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Main container based on #game-container */
+        #nav-container {
+            width: 100%;
+            max-width: 900px;
+            background-color: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 30px 40px;
+            box-sizing: border-box;
+            position: relative; /* Needed for modal relative positioning if desired */
+        }
+
+        /* Page Title */
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin: 0;
+            font-size: 2.5rem;
+        }
+        
+        /* Subtitle */
+        p {
+            text-align: center;
+            color: var(--grey-text);
+            margin: 0 0 25px 0;
+            font-weight: 400;
+        }
+        
+        /* --- RANK SYSTEM STYLES --- */
+        #rank-container {
+            width: 100%;
+            margin: 0px auto 20px;
+            text-align: center;
+        }
+
+        #rank-badge {
+            display: inline-block;
+            padding: 6px 15px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 20px;
+            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Rank Badge Colors */
+        .rank-stone { background-color: #8D8D8D; color: var(--white); }
+        .rank-iron { background-color: #CFCFCF; color: var(--text-color); }
+        .rank-bronze { background-color: #cd7f32; color: var(--white); }
+        .rank-silver { background-color: #c0c0c0; color: var(--text-color); }
+        .rank-gold { background-color: #ffd700; color: var(--text-color); }
+        .rank-platinum { background-color: #e5e4e2; color: var(--text-color); }
+        .rank-ultimate { background-color: #1a1a1a; color: var(--white); }
+        
+        #rank-progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #eee;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #ddd;
+        }
+        
+        #rank-progress-fill {
+            width: 0%; /* Set by JS */
+            height: 100%;
+            background-color: var(--primary-color);
+            transition: width 0.5s ease;
+        }
+
+        /* Premium Rainbow Progress Bar */
+        body.premium-active #rank-progress-fill {
+            background-image: linear-gradient(
+                90deg, 
+                #ff0000, 
+                #ff7f00, 
+                #ffff00, 
+                #00ff00, 
+                #0000ff, 
+                #4b0082, 
+                #ee82ee
+            );
+            background-size: 400% auto;
+            animation: rainbow-flow 4s linear infinite;
+        }
+        
+        #rank-progress-text {
+            margin-top: 8px;
+            font-size: 0.9rem;
+            color: var(--grey-text);
+        }
+        /* --- END RANK STYLES --- */
+
+        /* --- NEW BUTTON BAR STYLES --- */
+        #button-bar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px; /* Space between buttons */
+            margin: 0 auto 20px auto;
+            flex-wrap: wrap; /* Allow buttons to wrap on small screens */
+        }
+
+        .action-button {
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+            color: var(--white);
+            text-decoration: none; /* For 'a' tag */
+        }
+        .action-button:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Specific style for Upgrade Button */
+        #upgrade-button {
+            background-color: var(--warning-color);
+        }
+        #upgrade-button:hover {
+            background-color: #e6893e;
+        }
+        
+        /* Specific style for Knowledge Button */
+        #knowledge-button {
+            background-color: var(--secondary-color);
+        }
+        #knowledge-button:hover {
+            background-color: #48d1b6;
+        }
+
+        /* Specific style for Videos Button */
+        #videos-button {
+            display: none;
+            background-color: var(--secondary-color);
+        }
+        #videos-button:hover {
+            background-color: #48d1b6;
+        }
+
+        /* Specific style for Dictation Button */
+        #dictation-button {
+            background-color: var(--secondary-color);
+        }
+        #dictation-button:hover {
+            background-color: #48d1b6;
+        }
+
+        /* Specific style for Brain Gym Button */
+        #gym-button {
+            background-color: var(--secondary-color);
+        }
+        #gym-button:hover {
+            background-color: #48d1b6;
+        }
+
+        /* Specific style for Bully Dailletin Button */
+        #changelog-button {
+            background-color: var(--secondary-color);
+        }
+        #changelog-button:hover {
+            background-color: #48d1b6;
+        }
+
+        body.premium-active #videos-button {
+            display: block;
+        }
+        
+        /* Hide upgrade button if premium is active */
+        body.premium-active #upgrade-button {
+            display: none;
+        }
+        /* --- END BUTTON BAR STYLES --- */
+
+
+        /* Breadcrumb navigation path */
+        #nav-path {
+            margin-bottom: 25px;
+            font-size: 1.1rem;
+            color: var(--grey-text);
+            text-align: center;
+            word-wrap: break-word;
+        }
+
+        #nav-path a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        #nav-path a:hover {
+            text-decoration: underline;
+        }
+        #nav-path span {
+            margin: 0 8px;
+        }
+
+        /* Container for buttons */
+        #content-area {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            width: 100%;
+        }
+
+        /* Styling for navigation buttons (Grades, Subjects) */
+        .nav-button {
+            background-color: var(--primary-color);
+            color: var(--white);
+            border: none;
+            border-radius: 8px;
+            padding: 18px 20px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            text-decoration: none;
+            display: block;
+        }
+
+        .nav-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Styling for quiz links */
+        .quiz-link {
+            background-color: var(--secondary-color);
+        }
+        
+        .quiz-link:hover {
+             background-color: #48d1b6; /* Slightly lighter shade */
+        }
+
+        /* Message for empty sections */
+        #content-area p {
+            font-size: 1.2rem;
+            color: var(--grey-text);
+            text-align: center;
+            grid-column: 1 / -1;
+            margin: 20px 0;
+        }
+
+        /* --- New CSS Rule to Hide the Counter Safely --- */
+        #counter-wrapper {
+            position: absolute; /* Take it out of the normal flow */
+            left: -9999px;      /* Move it far off-screen */
+            width: 1px;         /* Minimize its dimension */
+            height: 1px;        /* Minimize its dimension */
+            overflow: hidden;   /* Ensure nothing visible escapes */
+        }
+        /* -------------------------------------- */
+
+
+        /* --- PREMIUM FEATURE STYLES --- */
+
+        /* Premium Rainbow Text */
+        #premium-text {
+            display: none; /* Hidden by default */
+            font-weight: 700;
+            background-image: linear-gradient(
+                90deg, 
+                #ff0000, 
+                #ff7f00, 
+                #ffff00, 
+                #00ff00, 
+                #0000ff, 
+                #4b0082, 
+                #ee82ee
+            );
+            background-size: 200% auto;
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            animation: rainbow-flow 3s linear infinite;
+        }
+
+        @keyframes rainbow-flow {
+            to {
+                background-position: 200% center;
+            }
+        }
+
+        /* Show premium text when body has class */
+        body.premium-active #premium-text {
+            display: inline;
+        }
+
+        /* Premium Modal */
+        #premium-modal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5); /* Dimming overlay */
+            justify-content: center;
+            align-items: center;
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+
+        #modal-content {
+            background-color: var(--white);
+            margin: auto;
+            padding: 30px 40px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 450px;
+            position: relative;
+            animation: modal-fade-in 0.3s ease;
+        }
+
+        @keyframes modal-fade-in {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #modal-close {
+            color: var(--grey-text);
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        #modal-close:hover {
+            color: var(--text-color);
+        }
+
+        #modal-content h2 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-top: 0;
+        }
+
+        #modal-content p {
+            font-size: 1rem;
+            margin-bottom: 20px;
+        }
+
+        #redeem-input {
+            width: 100%;
+            padding: 12px;
+            font-size: 1rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box; /* Important */
+            margin-bottom: 20px;
+        }
+        #redeem-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        #redeem-submit {
+            width: 100%;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 700;
+            transition: background-color 0.2s ease;
+        }
+        #redeem-submit:hover {
+            background-color: #3a7dcb;
+        }
+        /* ------------------------------ */
+
+    </style>
+</head>
+<body>
+
+    <div id="nav-container">
+        <h1>UGA Rev <span id="premium-text">🅿🆁🅴🅼🅸🆄🅼</span></h1>
+        <p>By Deadibone Productions</p>
+        
+        <!-- --- RANK HTML --- -->
+        <div id="rank-container">
+            <div id="rank-badge" class="rank-stone">Stone</div>
+            <div id="rank-progress-bar">
+                <div id="rank-progress-fill"></div>
+            </div>
+            <div id="rank-progress-text">0 / 50 Score (Need 50 more for Iron)</div>
+        </div>
+        
+        <!-- --- NEW BUTTON BAR --- -->
+        <div id="button-bar">
+            <a href="knowledge.html" id="knowledge-button" class="action-button">📚 Knowledge</a>
+            <a href="gym.html" id="gym-button" class="action-button">🧠 Brain Gym</a>
+            <a href="videos.html" id="videos-button" class="action-button">📼 Videos</a>
+            <a href="dictation.html" id="dictation-button" class="action-button">🔤 Dictation</a>
+            <a href="changelog.html" id="changelog-button" class="action-button">📜 Bully Dailletin</a>
+            <!-- Existing Upgrade Button -->
+            <button id="upgrade-button" class="action-button">✨ Upgrade to Premium ✨</button>
+        </div>
+        <!-- --- END BUTTON BAR --- -->
+        
+        <a href="https://wa.me/85292130599?text=Hi I would like to suggest a UT to be added to UGA Rev"><p>Suggest UT to be added</p></a>
+
+        <div id="nav-path"></div>
+        
+        <div id="content-area"></div>
+        <p></p>
+        <p>Made by DBP with the help of Rex, Jaden and <a href="team.html">more</a></p>
+        
+    </div>
+
+    <div id="premium-modal">
+        <div id="modal-content">
+            <span id="modal-close">&times;</span>
+            <h2>Get UGA Rev Premium!</h2>
+            <p>Enter your redeem code below to unlock exclusive content and features.</p>
+            <a href="https://wa.me/85292130599?text=Hi I want UGA REV Premium"><p>Get premium code</p></a>
+
+            <label for="redeem-input" style="display: block; margin-bottom: 8px; font-weight: 700; color: var(--text-color);">Redeem Code:</label>
+            <input type="text" id="redeem-input" placeholder="Enter your code">
+            <button id="redeem-submit">Submit</button>
+        </div>
+    </div>
+    <script type="text/javascript" src="thing/helpers.js"></script>
+    <script type="text/javascript" src="thing/codes.js"></script>
+
+<div id="counter-wrapper">
+    <a href='https://www.free-counters.org/'>Counter</a> 
+    <script type='text/javascript' src='https://www.freevisitorcounters.com/auth.php?id=ba0866695842932cdbb73f85dc2bf57387812da3'></script>
+    <script type="text/javascript" src="https://www.freevisitorcounters.com/en/home/counter/1431907/t/4"></script>
+</div>
+<!-- 100% privacy-first analytics -->
+<script async src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
+
+</body>
+</html>

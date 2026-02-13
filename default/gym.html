@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>S1 Brain Gym</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Noto+Sans+TC:wght@400;500;700&display=swap');
+
+        :root {
+            --green: #58cc02; --green-dark: #46a302;
+            --blue: #1cb0f6; --blue-dark: #1899d6;
+            --purple: #ce82ff; --purple-dark: #a568cc;
+            --orange: #ff9600; --orange-dark: #cc7800;
+            --red: #ff4b4b; --red-dark: #ea2b2b;
+            --teal: #20c997; --teal-dark: #1aa179;
+            --pink: #ff80cc; --pink-dark: #cc66a3;
+            --bg-color: #ffffff; --text-color: #3c3c3c;
+            --grey-light: #e5e5e5; --grey-dark: #afafaf;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+        body {
+            font-family: 'Nunito', 'Noto Sans TC', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0; padding: 0;
+            display: flex; flex-direction: column;
+            height: 100vh; overflow: hidden;
+        }
+
+        /* --- VIEWS --- */
+        .view-section { display: none; width: 100%; height: 100%; flex-direction: column; }
+        .view-section.active { display: flex; }
+
+        /* ===========================
+           1. PATH VIEW (HOME)
+           =========================== */
+        #path-view { overflow-y: auto; background: #fff; scroll-behavior: smooth; }
+        
+        .path-header {
+            position: sticky; top: 0; z-index: 10;
+            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);
+            border-bottom: 2px solid var(--grey-light); padding: 15px 20px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .home-btn { text-decoration: none; font-weight: 800; color: var(--grey-dark); font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; }
+        .xp-display { font-weight: 800; color: var(--orange); display: flex; align-items: center; gap: 6px; font-size: 1.1rem; }
+
+        .path-container { padding: 20px 20px 100px; display: flex; flex-direction: column; align-items: center; max-width: 600px; margin: 0 auto; width: 100%; }
+
+        /* Unit Sections */
+        .unit-section { width: 100%; margin-bottom: 20px; }
+        .unit-header {
+            color: white; padding: 20px; border-radius: 16px;
+            margin-bottom: 20px; text-align: left;
+            position: relative; overflow: hidden;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.15);
+        }
+        /* Unit Colors */
+        .unit-header.u1 { background: var(--green); }
+        .unit-header.u2 { background: var(--blue); }
+        .unit-header.u3 { background: var(--purple); }
+        .unit-header.u4 { background: var(--orange); }
+        .unit-header.u5 { background: var(--red); }
+        .unit-header.u6 { background: var(--teal); }
+        .unit-header.u7 { background: var(--pink); }
+
+        .unit-header h2 { margin: 0; font-size: 1.5rem; font-weight: 800; text-shadow: 0 2px 0 rgba(0,0,0,0.1); }
+        .unit-header p { margin: 5px 0 0 0; opacity: 0.9; font-size: 1rem; font-weight: 600; }
+
+        /* Nodes */
+        .path-row { display: flex; width: 100%; justify-content: center; position: relative; height: 110px; }
+        .path-row:nth-child(odd) { justify-content: center; }
+        .path-row:nth-child(4n+2) { padding-left: 60px; }
+        .path-row:nth-child(4n+4) { padding-right: 60px; }
+
+        .lesson-node {
+            width: 75px; height: 75px; border-radius: 50%;
+            background-color: var(--grey-light); box-shadow: 0 8px 0 var(--grey-dark);
+            display: flex; justify-content: center; align-items: center;
+            font-size: 2.2rem; cursor: pointer; position: relative; z-index: 2;
+            transition: transform 0.1s;
+        }
+        .lesson-node:active { transform: translateY(4px); box-shadow: 0 4px 0 var(--grey-dark); }
+        
+        .lesson-node.completed { background-color: #ffc800; box-shadow: 0 8px 0 #e5b400; color: white; }
+        /* Use Unit Colors for current nodes */
+        .u1 .current { background-color: var(--green); box-shadow: 0 8px 0 var(--green-dark); }
+        .u2 .current { background-color: var(--blue); box-shadow: 0 8px 0 var(--blue-dark); }
+        .u3 .current { background-color: var(--purple); box-shadow: 0 8px 0 var(--purple-dark); }
+        .u4 .current { background-color: var(--orange); box-shadow: 0 8px 0 var(--orange-dark); }
+        .u5 .current { background-color: var(--red); box-shadow: 0 8px 0 var(--red-dark); }
+        .u6 .current { background-color: var(--teal); box-shadow: 0 8px 0 var(--teal-dark); }
+        .u7 .current { background-color: var(--pink); box-shadow: 0 8px 0 var(--pink-dark); }
+        
+        .lesson-node.current { color: white; animation: pulse 2s infinite; }
+        .lesson-node.locked { opacity: 0.6; filter: grayscale(1); }
+
+        .node-label {
+            position: absolute; top: 90px; width: 160px; text-align: center;
+            background: white; padding: 8px; border-radius: 12px;
+            font-size: 0.85rem; font-weight: 700; color: var(--grey-dark);
+            border: 2px solid var(--grey-light); pointer-events: none; opacity: 0; transition: opacity 0.2s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); z-index: 10; pointer-events: none;
+        }
+        .lesson-node:hover .node-label { opacity: 1; transform: translateY(-5px); }
+        .lesson-node.current .node-label { opacity: 1; color: var(--text-color); border-color: var(--grey-light); }
+
+        @keyframes pulse { 0% {transform: scale(1);} 50% {transform: scale(1.05);} 100% {transform: scale(1);} }
+
+        /* ===========================
+           2. GAME VIEW
+           =========================== */
+        #game-view { max-width: 700px; margin: 0 auto; background: white; position: relative; }
+        
+        .game-header { padding: 15px 20px; display: flex; align-items: center; gap: 20px; border-bottom: 2px solid #f0f0f0; }
+        .close-btn { font-size: 1.8rem; color: var(--grey-dark); cursor: pointer; border: none; background: none; font-weight: 300; }
+        
+        .progress-bar-bg { flex-grow: 1; height: 16px; background: #e5e5e5; border-radius: 8px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; background: var(--green); width: 0%; transition: width 0.5s cubic-bezier(0.4, 1.6, 0.4, 0.8); }
+
+        .game-content { flex-grow: 1; padding: 20px 20px 120px 20px; overflow-y: auto; display: flex; flex-direction: column; align-items: center; }
+
+        .question-text { font-size: 1.4rem; font-weight: 700; color: var(--text-color); text-align: center; margin-bottom: 25px; width: 100%; line-height: 1.4; }
+
+        #visual-canvas {
+            width: 100%; height: 320px; background: white;
+            border: 2px solid #e5e5e5; border-radius: 16px;
+            touch-action: none; cursor: pointer; margin-bottom: 10px;
+        }
+        .hint-text { color: var(--grey-dark); font-size: 0.95rem; font-weight: 700; font-style: italic; margin-bottom: 25px; text-align: center; display: block; width: 100%; }
+
+        .options-grid { display: grid; grid-template-columns: 1fr; gap: 12px; width: 100%; max-width: 500px; }
+        @media(min-width: 600px) { .options-grid { grid-template-columns: 1fr 1fr; } }
+
+        .game-btn {
+            background: white; border: 2px solid #e5e5e5; border-radius: 16px;
+            padding: 18px; font-size: 1.1rem; font-weight: 700; color: var(--text-color);
+            cursor: pointer; box-shadow: 0 4px 0 #e5e5e5; transition: transform 0.1s;
+        }
+        .game-btn:active { transform: translateY(4px); box-shadow: none; }
+        .game-btn.selected { border-color: var(--blue); background: #ddf4ff; color: var(--blue-dark); box-shadow: 0 4px 0 var(--blue-dark); }
+        .game-btn.correct { border-color: var(--green); background: #d7ffb8; color: var(--green-dark); box-shadow: 0 4px 0 var(--green-dark); }
+        .game-btn.wrong { border-color: var(--red); background: #ffdfe0; color: var(--red-dark); }
+
+        .game-footer {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            padding: 20px; border-top: 2px solid #e5e5e5; background: white;
+            display: flex; justify-content: center; z-index: 50;
+        }
+        .check-btn {
+            width: 100%; max-width: 500px; background: var(--green); color: white;
+            font-size: 1.1rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;
+            padding: 16px; border-radius: 16px; border: none;
+            box-shadow: 0 4px 0 var(--green-dark); cursor: pointer; transition: background 0.2s;
+        }
+        .check-btn:active { transform: translateY(4px); box-shadow: none; }
+        
+        /* --- OVERLAYS --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(2px);
+            z-index: 200; display: none; align-items: center; justify-content: center;
+            padding: 20px; animation: fadeIn 0.2s ease-out;
+        }
+        
+        /* Stats Card */
+        .stats-card {
+            background: white; width: 100%; max-width: 400px;
+            border-radius: 20px; padding: 30px; text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            transform: scale(0.9); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes popIn { to { transform: scale(1); } }
+
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 25px 0; }
+        .stat-box { background: var(--bg-color); border: 2px solid var(--grey-light); border-radius: 12px; padding: 15px; }
+        .stat-label { font-size: 0.8rem; color: var(--grey-dark); font-weight: 700; text-transform: uppercase; }
+        .stat-val { font-size: 1.5rem; font-weight: 800; color: var(--blue); }
+        .stat-val.acc { color: var(--orange); }
+
+        /* Feedback Sheet */
+        .feedback-popup {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            padding: 20px 20px 40px 20px; 
+            background: white; border-top: 2px solid transparent;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+            transform: translateY(110%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 100; display: flex; flex-direction: column; align-items: center;
+        }
+        .feedback-inner { width: 100%; max-width: 600px; }
+        .feedback-popup.show { transform: translateY(0); }
+        .feedback-popup.correct { background: #d7ffb8; border-color: #b8f28b; color: #58a700; }
+        .feedback-popup.wrong { background: #ffdfe0; border-color: #ffc1c1; color: #ea2b2b; }
+        
+        .feedback-header { font-weight: 800; font-size: 1.5rem; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+        .feedback-text { font-size: 1.1rem; color: #3c3c3c; margin-bottom: 20px; line-height: 1.5; }
+        
+        .continue-btn {
+            width: 100%; background: white; color: inherit;
+            border: 2px solid rgba(0,0,0,0.05); font-size: 1.1rem; font-weight: 800;
+            padding: 16px; border-radius: 16px; box-shadow: 0 4px 0 rgba(0,0,0,0.05);
+            cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .continue-btn:active { transform: translateY(4px); box-shadow: none; }
+        .feedback-popup.correct .continue-btn { background: var(--green); color: white; box-shadow: 0 4px 0 var(--green-dark); }
+        .feedback-popup.wrong .continue-btn { background: var(--red); color: white; box-shadow: 0 4px 0 var(--red-dark); }
+
+        /* Skip Modal */
+        .modal-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 10px; color: var(--text-color); }
+        .modal-text { color: var(--grey-dark); margin-bottom: 25px; font-size: 1.1rem; }
+        .modal-actions { display: flex; gap: 10px; justify-content: center; }
+        .btn-secondary { background: var(--grey-light); color: var(--text-color); box-shadow: 0 4px 0 var(--grey-dark); }
+        
+        @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+
+    </style>
+</head>
+<body>
+
+    <!-- 1. PATH VIEW -->
+    <div id="path-view" class="view-section active">
+        <div class="path-header">
+            <a href="index.html" class="home-btn">← Exit</a>
+            <div class="xp-display">💎 <span id="total-xp">0</span></div>
+        </div>
+        <div class="path-container" id="path-container">
+            <!-- Units injected here -->
+        </div>
+    </div>
+
+    <!-- 2. GAME VIEW -->
+    <div id="game-view" class="view-section">
+        <div class="game-header">
+            <button class="close-btn" onclick="quitLesson()">✕</button>
+            <div class="progress-bar-bg"><div id="progress-fill" class="progress-bar-fill"></div></div>
+        </div>
+        
+        <div class="game-content">
+            <div id="q-text" class="question-text">Loading...</div>
+            
+            <canvas id="visual-canvas" style="display:none;"></canvas>
+            <div id="visual-hint" class="hint-text" style="display:none;">Hint</div>
+            
+            <div id="options-area" class="options-grid"></div>
+        </div>
+
+        <div class="game-footer" id="game-footer">
+            <button id="check-btn" class="check-btn">CHECK ANSWER</button>
+        </div>
+
+        <!-- FEEDBACK SHEET -->
+        <div id="feedback-sheet" class="feedback-popup">
+            <div class="feedback-inner">
+                <div id="fb-header" class="feedback-header"></div>
+                <div id="fb-text" class="feedback-text"></div>
+                <button id="continue-btn" class="continue-btn">CONTINUE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. RESULTS SCREEN -->
+    <div id="result-overlay" class="modal-overlay">
+        <div class="stats-card">
+            <div style="font-size:4rem; margin-bottom:10px;">🎉</div>
+            <h2 style="margin:0; font-size:1.8rem; font-weight:800; color:var(--green);">Lesson Complete!</h2>
+            
+            <div class="stat-grid">
+                <div class="stat-box">
+                    <div class="stat-label">Accuracy</div>
+                    <div class="stat-val acc" id="res-acc">100%</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Time</div>
+                    <div class="stat-val" id="res-time">1:20</div>
+                </div>
+            </div>
+            
+            <div class="stat-box" style="margin-bottom:25px; background: #fffce8; border-color:#ffe58f;">
+                <div class="stat-label" style="color:#d4a017">Total XP Earned</div>
+                <div class="stat-val" style="color:#d4a017" id="res-xp">+20</div>
+            </div>
+
+            <button class="check-btn" onclick="finishLesson()">CONTINUE</button>
+        </div>
+    </div>
+
+    <!-- 4. SKIP CONFIRM MODAL -->
+    <div id="skip-overlay" class="modal-overlay">
+        <div class="stats-card">
+            <div class="modal-title">Jump to this level?</div>
+            <p class="modal-text">This level is currently locked. Do you want to skip ahead and play it anyway?</p>
+            <div class="modal-actions">
+                <button class="check-btn btn-secondary" style="width:auto; padding:15px 30px;" onclick="closeSkip()">CANCEL</button>
+                <button class="check-btn" style="width:auto; padding:15px 30px;" onclick="confirmSkip()">JUMP AHEAD</button>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript" src="thing/gym.js"></script>
+    <script src="thing/generators.js"></script> 
+    <script>init();</script>
+
+</body>
+</html>

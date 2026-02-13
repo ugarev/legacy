@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中文中一單元一</title>
+    <link rel="icon" type="image/x-icon" href="../../icon.png">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
+
+        :root {
+            --primary-color: #4A90E2;
+            --secondary-color: #50E3C2;
+            --correct-color: #28a745;
+            --incorrect-color: #dc3545;
+            --warning-color: #db7B2b;
+            --bg-color: #f4f7f9;
+            --text-color: #333;
+            --white: #FFFFFF;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 900px;
+            background-color: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            text-align: center;
+        }
+
+        #start-screen, #end-screen {
+            padding: 50px;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        #start-screen p {
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+        }
+
+        #start-button, .restart-button {
+            background-color: var(--primary-color);
+            color: var(--white);
+            border: none;
+            padding: 15px 35px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        #start-button:hover, .restart-button:hover {
+            background-color: #357ABD;
+            transform: translateY(-2px);
+        }
+
+        #quiz-screen {
+            display: none;
+        }
+
+        #header {
+            padding: 20px 30px;
+            background-color: var(--primary-color);
+            color: var(--white);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #header div {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        #question-container {
+            padding: 30px 40px;
+        }
+
+        #question-text {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 25px;
+            min-height: 70px;
+            line-height: 1.5;
+        }
+
+        #timer {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            background-color: #eef5ff;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 20px;
+            border: 4px solid var(--primary-color);
+            transition: all 0.3s;
+        }
+
+        #timer.warning {
+            color: var(--incorrect-color);
+            border-color: var(--incorrect-color);
+        }
+
+        #options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        /* 長問答輸入框 */
+        #long-answer-container {
+            display: none;
+            margin-top: 20px;
+        }
+        
+        #long-answer-input {
+            width: 90%;
+            height: 120px;
+            font-size: 1rem;
+            font-family: 'Noto Sans TC', sans-serif;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+        }
+        
+        #submit-long-answer {
+            background-color: var(--secondary-color);
+            color: var(--white);
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        
+        #submit-long-answer:hover {
+            background-color: #40B89F;
+            transform: translateY(-2px);
+        }
+        
+        #submit-long-answer:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .option-button {
+            background-color: var(--white);
+            border: 2px solid #ddd;
+            color: var(--text-color);
+            padding: 20px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 60px;
+        }
+
+        .option-button:hover:not(:disabled) {
+            background-color: #f0f5ff;
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .option-button.correct {
+            background-color: var(--correct-color);
+            border-color: var(--correct-color);
+            color: var(--white);
+        }
+
+        .option-button.incorrect {
+            background-color: var(--incorrect-color);
+            border-color: var(--incorrect-color);
+            color: var(--white);
+        }
+
+        .option-button:disabled {
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+
+        #feedback-container {
+            margin-top: 20px;
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #feedback {
+            font-size: 1.3rem;
+            font-weight: 700;
+            text-align: left;
+            padding: 0 10px;
+        }
+        
+        #feedback-answer {
+            font-size: 1rem;
+            font-weight: 400;
+            color: #555;
+            margin-top: 10px;
+            text-align: left;
+            padding: 0 10px;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        #next-button {
+            background-color: var(--secondary-color);
+            color: var(--white);
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+            display: none;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        #next-button:hover {
+            background-color: #40B89F;
+            transform: translateY(-2px);
+        }
+
+        #end-screen {
+            display: none;
+        }
+
+        #final-score {
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            font-weight: 700;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+
+        <div id="start-screen">
+            <h1>中文中一單元一</h1>
+            <h2>終極隨機挑戰</h2>
+            <p>Presented by Deadibone Productions</p>
+            <button id="start-button">開始挑戰！</button>
+        </div>
+
+        <div id="quiz-screen">
+            <div id="header">
+                <div id="question-counter">問題 1 / 10</div>
+                <div id="score">分數: 0 / 20</div>
+            </div>
+            <div id="question-container">
+                <div id="timer">15</div>
+                <div id="question-text">這是問題的文字...</div>
+                
+                <div id="options-grid">
+                    </div>
+                
+                <div id="long-answer-container">
+                    <textarea id="long-answer-input" placeholder="請在這裏輸入你的答案..."></textarea>
+                    <button id="submit-long-answer">提交答案</button>
+                </div>
+                
+                <div id="feedback-container">
+                    <div id="feedback"></div>
+                    <div id="feedback-answer"></div> <button id="next-button">下一題</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="end-screen">
+            <h1>挑戰完成！</h1>
+            <div id="final-score">你的最終得分是: 0 / 20</div>
+            <p>溫故知新，繼續努力！</p>
+            <button class="restart-button">再玩一次</button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- NEW: COOKIE HELPER FUNCTIONS ---
+        // (Copied from index.html)
+        function setCookie(name, value, days) {
+            let expires = "";
+            if (days) {
+                const date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + (value || "") + expires + "; path=/; SameSite=Lax";
+        }
+
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+        // --- END COOKIE FUNCTIONS ---
+
+        const allQuestions = [
+            // *** 長問答題 (2/1/0 評分) ***
+            { 
+                time: 60, 
+                type: "long",
+                question: "《程門立雪》: 作者在文首提及楊時「調官不赴」有何作用？(試卷題)", 
+                fullMarkKeys: ["不慕名利", "鋪墊"], // 必須包含這 2 個
+                partialMarkKeys: ["楊時", "好學", "形象", "真心", "放棄", "官位", "官", "鋪排", "誠心", "真心"], // 包含 1 個即可得 1 分
+                feedback: "參考答案(2分)：突出楊時「不慕名利」的形象，並為後文「程門立雪」的誠心作「鋪墊」。(1分)：能指出「不慕名利」或「鋪墊」其中一點。"
+            },
+            { 
+                time: 60, 
+                type: "long",
+                question: "《林琴南敬師》: 試語譯「若心固善，然此豈束脩之禮？」(試卷題)", 
+                fullMarkKeys: ["難道", "怎", "豈", "拜師", "禮儀", "禮"], // 必須包含 "反問" + "意思"
+                partialMarkKeys: ["心意", "好", "然而", "但是", "束脩", "善", "然", "見面禮"], // 包含 1 個即可得 1 分
+                feedback: "參考答案(2分)：你的心意固然是好的，然而，這「難道」是「拜師的禮儀」嗎？(1分)：能譯出「心意很好」或「然而這不是束脩」。"
+            },
+            { 
+                time: 60, 
+                type: "long",
+                question: "《程門立雪》: 試語譯「其歸也，顥送之曰：『吾道南矣』。」(試卷題)", 
+                fullMarkKeys: ["學說", "道理", "學問", "道", "向南", "南方", "傳播", "南"], // 必須包含 "道" + "南" 的意思
+                partialMarkKeys: ["楊時", "回去", "歸去", "歸", "程顥", "送", "說"], // 包含 1 個即可得 1 分
+                feedback: "參考答案(2分)：楊時歸去時，程顥送他說：『我的「學說」將向「南方傳播」了。』(1分)：能譯出「楊時回去」或「程顥說」。"
+            },
+            { 
+                time: 60, 
+                type: "long",
+                question: "《我的老師》(賈平凹): 作者為何稱一個小孩孫涵泊為「老師」？", 
+                fullMarkKeys: ["反襯", "對比", "成年人", "成人", "虛偽", "世故"], // 必須包含 "對比" + "成年人的問題"
+                partialMarkKeys: ["麻木", "怯懦", "率真", "善良", "正義", "學習", "天真", "純真", "勇敢"], // 包含 1 個即可得 1 分
+                feedback: "參考答案(2分)：因為孫涵泊的品質，「反襯」出「成年人」的「虛偽」/麻木，值得作者反思學習。(1分)：能指出孫涵泊的優點(如「率真」、「善良」)。"
+            },
+            { 
+                time: 60, 
+                type: "long",
+                question: "《林琴南敬師》: 老師一開始為何「怒」而「拒不納」？", 
+                fullMarkKeys: ["以為", "認為", "誤會", "偷", "竊"], // 必須包含 "以為" + "偷"
+                partialMarkKeys: ["品格", "高尚", "非禮勿取", "生氣", "不接受", "清高", "正直"], // 包含 1 個即可得 1 分
+                feedback: "參考答案(2分)：因為老師「以為」米是林琴南「偷」來的。(1分)：能指出老師「品格高尚」或「不接受」。"
+            },
+            { 
+                time: 60, 
+                type: "long",
+                question: "《我的老師》(蘇叔陽): 劉老師的「腿」和「木棍」有何象徵意義？", 
+                fullMarkKeys: ["腿", "軟弱", "殘障", "木棍", "堅強", "意志"], // 必須包含 "腿/軟弱" + "木棍/堅強"
+                partialMarkKeys: ["對比", "撐", "支持", "克服", "象徵", "精神"], // 包含 1 個即可得 1 分
+                feedback: "參考答案(2分)：「腿」的殘障(軟弱)與「木棍」的粗壯(「堅強」)形成對比，象徵他以堅強「意志」克服殘障。(1F)：能指出「對比」或「堅強」。"
+            },
+            { 
+                time: 60, 
+                type: "long",
+                question: "《漢明帝尊師》: 明帝「親自...賜...設...」等行為，突顯他怎樣的形象？(試卷題)", 
+                fullMarkKeys: ["尊師", "重道", "尊敬", "老師"], // 必須包含 "尊師"
+                partialMarkKeys: ["皇帝", "親自", "禮", "關心", "愛護", "謙卑", "重視"], // 包含 1 個即可得 1 分
+                feedback: "參考答案(2分)：突顯他「尊敬師長」、「尊師重道」的形象。(1F)：能指出他「關心」或「禮待」老師。"
+            },
+            { 
+                time: 60, 
+                type: "long",
+                question: "《我的老師(賈平凹)》: 「阿姨摘花」一事，運用了甚麼手法來刻劃孫涵泊？", 
+                fullMarkKeys: ["反襯", "對比", "襯托"], // 必須包含 "對比" 類
+                partialMarkKeys: ["阿姨", "側面", "烘托", "大人", "成人"], // 包含 1 個即可得 1 分
+                feedback: "參考答案(2分)：運用了「反襯」(或「對比」)手法。(1F)：能指出「側面烘托」。"
+            },
+            { 
+                time: 60, 
+                type: "long",
+                question: "《我的老師(蘇叔陽)》: 作者憶述劉老師教書的幾件事，抒發了他怎樣的感情？", 
+                fullMarkKeys: ["尊敬", "思念", "感激"], // 必須包含這 3 個
+                partialMarkKeys: ["敬愛", "懷念", "感謝", "想念"], // 包含 1 個即可得 1 分
+                feedback: "參考答案(2分)：抒發了對老師的「尊敬」、「思念」和「感激」之情。(1F)：能答出「尊敬」或「思念」等其中一點。"
+            },
+            { 
+                time: 60, 
+                type: "long",
+                question: "《林琴南敬師》: 從林琴南「潛歸」、「以襪實米」等行動，可見他是個怎樣的人？", 
+                fullMarkKeys: ["尊師", "重道", "關心", "老師"], // 必須包含 "尊師"
+                partialMarkKeys: ["細心", "體貼", "愛護", "孝順"], // 包含 1 個即可得 1 分
+                feedback: "參考答案(2F)：可見他「關心老師」，有「尊師重道」的精神。(1F)：能答出「體貼」或「細心」。"
+            },
+            { 
+                time: 60, 
+                type: "long",
+                question: "《我的老師(蘇叔陽)》: 劉老師講民族英雄時「慷慨陳詞」，講近代史時「哽咽」，這突顯他怎樣的形象？", 
+                fullMarkKeys: ["愛國", "情懷"], // 必須包含 "愛國"
+                partialMarkKeys: ["感性", "愛", "國家", "民族", "感情豐富"], // 包含 1 個即可得 1 分
+                feedback: "參考答案(2F)：突顯他富有「愛國情懷」。(1F)：能答出「熱愛國家」或「感性」。"
+            },
+
+            // --- 選擇題 (MCQ) ---
+            // 《我的老師》(蘇叔陽)
+            { time: 15, question: "《我的老師》(蘇叔陽): 劉老師怎樣形容自己的殘障？", correctAnswer: "女媧甩掉了一條腿的", incorrectAnswers: ["被共工撞斷了腿的", "盤古開天時壓傷的", "後羿射日時誤傷的"] },
+            { time: 15, question: "《我的老師》(蘇叔陽): 本文開首運用了甚麼敘事手法？", correctAnswer: "倒敘法", incorrectAnswers: ["順敘法", "插敘法", "散敘法"] },
+            { time: 15, question: "《我的老師》(蘇叔陽): 劉老師寫板書時的「撐」、「騰」地跳躍，是甚麼描寫手法？", correctAnswer: "行動描寫", incorrectAnswers: ["肖像描寫", "語言描寫", "心理描寫"] },
+            { time: 15, question: "《我的老師》(蘇叔陽): 劉老師講到近代史受屈辱時「常常哽咽」，表現了他？", correctAnswer: "富有愛國情懷", incorrectAnswers: ["情緒不穩定", "非常喜歡歷史", "善於說故事"] },
+            { time: 15, question: "《我的老師》(蘇叔陽): 判斷題：劉老師因為腿傷，所以上課時都坐著講課。", correctAnswer: "錯誤", incorrectAnswers: ["正確", "無從判斷"] },
+            { time: 15, question: "《我的老師》(蘇叔陽): 判斷題：作者長大後，還經常去探望劉老師。", correctAnswer: "無從判斷", incorrectAnswers: ["正確", "錯誤"] },
+            { time: 15, question: "《我的老師》(蘇叔陽): 劉老師說「好！五分！」時，聲調是？", correctAnswer: "親切、大聲", incorrectAnswers: ["嚴厲、大聲", "親切、細聲", "嚴厲、細聲"] },
+            { time: 15, question: "《我的老師》(蘇叔陽): 劉老師「講到女媧氏...我就是...被她甩了一條腿的。」運用了甚麼描寫？(試卷題)", correctAnswer: "語言描寫", incorrectAnswers: ["行動描寫", "肖像描寫", "心理描寫"] },
+            
+            // 《我的老師》(賈平凹)
+            { time: 15, question: "《我的老師》(賈平凹): 孫涵泊問「花疼不疼？」突顯他甚麼品質？", correctAnswer: "善良、愛惜生命", incorrectAnswers: ["率真、有主見", "富有正義感", "膽小、怯懦"] },
+            { time: 15, question: "《我的老師》(賈平凹): 孫涵泊直言作者的字是「黑字」，突顯他甚麼品質？", correctAnswer: "率真、有獨立見解", incorrectAnswers: ["善良、愛惜生命", "富有正義感", "固執、沒禮貌"] },
+            { time: 15, question: "《我的老師》(賈平凹): 孫涵泊「撲上去」「幫著弱的」打架，突顯他甚麼品質？", correctAnswer: "富有正義感", incorrectAnswers: ["善良、愛惜生命", "率真、有主見", "魯莽、愛惹事"] },
+            { time: 15, question: "《我的老師》(賈平凹): 本文運用了甚麼手法來反思成年人的問題？", correctAnswer: "對比 / 襯托", incorrectAnswers: ["借喻", "借代", "誇張"] },
+            { time: 15, question: "《我的老師》(賈平凹): 判斷題：孫涵泊是作者學校裏的正式學生。", correctAnswer: "錯誤", incorrectAnswers: ["正確", "無從判斷"] },
+            { time: 15, question: "《我的老師》(賈平凹): 判斷題：作者最後出手，制止了大孩子欺負小孩子。", correctAnswer: "錯誤", incorrectAnswers: ["正確", "無從判斷"] },
+            { time: 15, question: "《我的老師》(賈平凹): 作者看到大孩打小孩時，他的反應是？", correctAnswer: "內心怯懦，沒有制止", incorrectAnswers: ["立刻上前制止", "叫孫涵泊去制止", "報警"] },
+            { time: 15, question: "《我的老師》(賈平凹): 判斷題：作者認為每一個成年人都會為了討好權威而恭維別人。(試卷題)", correctAnswer: "錯誤", incorrectAnswers: ["正確", "無從判斷"] },
+            { time: 15, question: "《我的老師》(賈平凹): 判斷題：作者希望讀者可以反思自己並效仿孫涵泊的美好特質。(試卷題)", correctAnswer: "正確", incorrectAnswers: ["錯誤", "無從判斷"] },
+            { time: 15, question: "《我的老師》(賈平凹): 「阿姨摘花」一事運用了甚麼人物描寫手法？(試卷題)", correctAnswer: "人物烘托 / 反襯", incorrectAnswers: ["肖像描寫", "正面描寫", "心理描寫"] },
+
+            // 《林琴南敬師》 - 文言字詞
+            { time: 15, question: "《林琴南敬師》: 「炊不得米」的「炊」字是甚麼意思？", correctAnswer: "煮飯", incorrectAnswers: ["吹氣", "哭泣", "炊具"] },
+            { time: 15, question: "《林琴南敬師》: 「以襪實米」的「實」字是甚麼意思？", correctAnswer: "裝滿", incorrectAnswers: ["果實", "誠實", "踩踏"] },
+            { time: 15, question: "《林琴南敬師》: 「師怒，謂其竊」的「竊」字是甚麼意思？", correctAnswer: "偷竊", incorrectAnswers: ["私下", "切開", "竊笑"] },
+            { time: 15, question: "《林琴南敬師》: 「拒不納」的「納」字是甚麼意思？", correctAnswer: "接受", incorrectAnswers: ["納悶", "繳納", "納涼"] },
+            { time: 15, question: "《林琴南敬師》: 「潛歸」的「潛」字是甚麼意思？", correctAnswer: "偷偷地", incorrectAnswers: ["潛水", "潛力", "前進"] },
+            { time: 15, question: "《林琴南敬師》: 「負而授之」的「負」字是甚麼意思？(試卷題)", correctAnswer: "背負 / 背著", incorrectAnswers: ["輸了", "辜負", "負責任"] },
+            { time: 15, question: "《林琴南敬師》: 「母告之故」的「故」字是甚麼意思？", correctAnswer: "緣故", incorrectAnswers: ["所以", "故意", "舊的"] },
+            { time: 15, question: "《林琴南敬師》: 「乃受之」的「乃」字是甚麼意思？", correctAnswer: "於是 / 才", incorrectAnswers: ["你的", "不是", "牛奶"] },
+            { time: 15, question: "《林琴南敬師》: 「師怒，謂其竊」的「謂」字是甚麼意思？", correctAnswer: "認為 / 說", incorrectAnswers: ["叫做", "告訴", "責罵"] },
+            { time: 15, question: "《林琴南敬師》: 「卻弗受」的「弗」字是甚麼意思？(試卷題)", correctAnswer: "不", incorrectAnswers: ["不要", "不是", "勿"] },
+
+            // 《林琴南敬師》 - 內容
+            { time: 15, question: "《林琴南敬師》: 老師最後「感泣」而「乃受之」的原因是甚麼？", correctAnswer: "被學生的誠心所感動", incorrectAnswers: ["因為他真的很餓", "因為林琴南的母親強迫", "因為他發現米很貴"] },
+            { time: 15, question: "《林琴南敬師》: 判斷題：林琴南的母親一開始就知道他要送米給老師。", correctAnswer: "錯誤", incorrectAnswers: ["正確", "無從判斷"] },
+
+            // 《程門立雪》 - 文言字詞
+            { time: 15, question: "《程門立雪》: 「頤偶瞑坐」的「偶」字是甚麼意思？", correctAnswer: "剛好", incorrectAnswers: ["偶像", "偶數", "偶爾"] },
+            { time: 15, question: "《程門立雪》: 「頤偶瞑坐」的「瞑坐」是甚麼意思？", correctAnswer: "閉目而坐 (睡著)", incorrectAnswers: ["冥想", "坐著發呆", "沉思"] },
+            { time: 15, question: "《程門立雪》: 「頤既覺」的「覺」字是甚麼意思？", correctAnswer: "醒來", incorrectAnswers: ["感覺", "睡覺", "覺得"] },
+            { time: 15, question: "《程門立雪》: 「立雪盈尺」的「盈」字是甚麼意思？", correctAnswer: "滿", incorrectAnswers: ["盈利", "輕盈", "應該"] },
+            { time: 15, question: "《程門立雪》: 「時與酢侍立不去」的「侍立」是甚麼意思？", correctAnswer: "恭敬地站立", incorrectAnswers: ["服侍", "站著", "等待"] },
+            { time: 15, question: "《程門立雪》: 「頤既覺」的「既」字是甚麼意思？", correctAnswer: "已經", incorrectAnswers: ["既然", "和", "就"] },
+            { time: 15, question: "《程門立雪》: 「時蓋年四十矣」的「蓋」字是甚麼意思？", correctAnswer: "大概", incorrectAnswers: ["蓋子", "因為", "覆蓋"] },
+            { time: 15, question: "《程門立雪》: 「時蓋年四十矣」的「矣」字是甚麼意思？", correctAnswer: "了 (語氣助詞)", incorrectAnswers: ["啊", "嗎", "停止"] },
+            { time: 15, question: "《程門立雪》: 「調官不赴」的「赴」字是甚麼意思？", correctAnswer: "赴任 / 前往", incorrectAnswers: ["應付", "跌倒", "安撫"] },
+            { time: 15, question: "《程門立雪》: 「時河南程顥...」的「時」是甚麼意思？(試卷題)", correctAnswer: "正值 / 適逢", incorrectAnswers: ["當時", "時間", "時常"] },
+            { time: 15, question: "《程門立雪》: 「四年而顥死，時聞之」的「聞」是甚麼意思？(試卷題)", correctAnswer: "聽聞 / 聽說", incorrectAnswers: ["聞到", "名聲", "知道"] },
+
+            // 《程門立雪》 - 內容
+            { time: 15, question: "《程門立雪》: 判斷題：楊時去拜師時，年紀已經四十歲了。", correctAnswer: "正確", incorrectAnswers: ["錯誤", "無從判斷"] },
+            { time: 15, question: "《程門立雪》: 判斷題：程頤故意讓楊時和游酢在雪中久等。", correctAnswer: "錯誤", incorrectAnswers: ["正確", "無從判斷"] },
+            
+            // 試卷新增篇章《漢明帝尊師》
+            { time: 15, question: "《漢明帝尊師》: 「猶尊榮以師禮」的「猶」是甚麼意思？(試卷題)", correctAnswer: "仍然 / 依然", incorrectAnswers: ["好像", "猶豫", "於是"] },
+            { time: 15, question: "《漢明帝尊師》: 「悉以太官供具賜太常家」的「悉」是甚麼意思？(試卷題)", correctAnswer: "全部 / 都", incorrectAnswers: ["熟悉", "悉心", "於是"] },
+            { time: 15, question: "《漢明帝尊師》: 漢明帝「入街，下車，擁經而前」是甚麼描寫？(試卷題)", correctAnswer: "動作描寫", incorrectAnswers: ["語言描寫", "心理描寫", "肖像描寫"] },
+
+            // 語文知識
+            { time: 15, question: "語文知識: 「烽煙四起」用「烽煙」借代「戰爭」，是甚麼修辭？", correctAnswer: "借代", incorrectAnswers: ["借喻", "擬人", "明喻"] },
+            { time: 15, question: "語文知識: 「這隻老狐狸不簡單。」用「老狐狸」比喻「狡猾的人」，是甚麼修辭？", correctAnswer: "借喻", incorrectAnswers: ["借代", "擬人", "誇張"] },
+            { time: 15, question: "語文知識: 「白衣天使」是「護士」的？", correctAnswer: "借代", incorrectAnswers: ["借喻", "外號", "別名"] },
+            { time: 15, question: "語文知識: 「他( )跑( )很快。」應填入？", correctAnswer: "地、得", incorrectAnswers: ["的、的", "的、得", "地、地"] },
+            { time: 15, question: "語文知識: 「和煦( )陽光照( )我暖洋洋( )。」應填入？", correctAnswer: "的、得、的", incorrectAnswers: ["的、地、的", "地、得、地", "的、得、地"] },
+            { time: 15, question: "語文知識: 「他高興( )跳了起來。」應填入？", correctAnswer: "地", incorrectAnswers: ["的", "得", "不需填"] },
+            
+            // 文化知識 (試卷題)
+            { time: 15, question: "文化知識: 判斷題：孔子被尊稱為「亞聖」。(試卷題)", correctAnswer: "錯誤", incorrectAnswers: ["正確", "無從判斷"] },
+            { time: 15, question: "文化知識: 判斷題：學童第一天入塾，需要先向孔子神位跪下磕頭。(試卷題)", correctAnswer: "正確", incorrectAnswers: ["錯誤", "無從判斷"] },
+            
+            // 指定成語
+            { time: 15, question: "指定成語: 形容恭敬謹慎，不辭勞苦地服務。這是？", correctAnswer: "鞠躬盡瘁", incorrectAnswers: ["恪盡職守", "嘔心瀝血", "步履蹣跚"] },
+            { time: 15, question: "指定成語: 形容善於引導人學習或向善。這是？", correctAnswer: "循循善誘", incorrectAnswers: ["有教無類", "金玉良言", "潤物無聲"] },
+            { time: 15, question: "指定成語: 形容走路搖晃不穩的樣子。這是？", correctAnswer: "步履蹣跚", incorrectAnswers: ["笑容可掬", "憂心忡忡", "不苟言笑"] },
+            { time: 15, question: "指定成語: 形容態度嚴肅，不隨便說笑。這是？", correctAnswer: "不苟言笑", incorrectAnswers: ["憂心忡忡", "恪盡職守", "鏗鏘有力"] },
+            { time: 15, question: "指定成語: 形容突然領悟、明白道理。這是？", correctAnswer: "茅塞頓開", incorrectAnswers: ["撥雲見日", "金玉良言", "知書達禮"] },
+            { time: 15, question: "指定成語: 形容教育的普及，不分對象。這是？", correctAnswer: "有教無類", incorrectAnswers: ["循循善誘", "知書達禮", "潤物無聲"] },
+            { time: 15, question: "指定成語: 「...陳老師的( )，我也不可能...」(試卷題)", correctAnswer: "循循善誘", incorrectAnswers: ["恪盡職守", "嘔心瀝血", "鞠躬盡瘁"] },
+            { time: 15, question: "指定成語: 「...醫護人員( )，有需要的病人...」(試卷題)", correctAnswer: "恪盡職守", incorrectAnswers: ["循循善誘", "嘔心瀝血", "鞠躬盡瘁"] },
+            { time: 15, question: "指定成語: 「...是他( )而寫成的作品...」(試卷題)", correctAnswer: "嘔心瀝血", incorrectAnswers: ["循循善誘", "恪盡職守", "鞠躬盡瘁"] },
+
+            // 指定錯別字 (已修復 Bug)
+            { time: 15, question: "指定錯別字: 「我們不應找( )來逃避責任。」應填入？(試卷題)", correctAnswer: "藉口", incorrectAnswers: ["籍口", "藉囗", "積口"] },
+            { time: 15, question: "指定錯別字: 「做學問的態度必須( )。」應填入？", correctAnswer: "嚴謹", incorrectAnswers: ["嚴緊", "嚴進", "嚴僅"] },
+            { time: 15, question: "指定錯別字: 「老師對我們的( )，我們永遠銘記在心。」應填入？", correctAnswer: "教誨", incorrectAnswers: ["教悔", "教晦", "教海"] },
+            { time: 15, question: "指定錯別字: 「他為人( )，一毛不拔。」(修復題)", correctAnswer: "吝嗇", incorrectAnswers: ["吝惜", "吝茜", "吝啬"] },
+            { time: 15, question: "指定錯別字: 「請不要( )我工作。」應填入？", correctAnswer: "妨礙", incorrectAnswers: ["防礙", "防外", "妨外"] },
+            { time: 15, question: "指定錯別字: 「夕陽下，海邊的景( )如詩如畫。」應填入？(試卷題)", correctAnswer: "象", incorrectAnswers: ["像", "相", "向"] },
+            { time: 15, question: "指定錯別字: 「...工作人員不斷催( )學生離開。」應填入？(試卷題)", correctAnswer: "促", incorrectAnswers: ["速", "捉", "摧"] },
+            { time: 15, question: "指定錯別字: 「...團隊合作是成功的關( )。」應填入？(試卷題)", correctAnswer: "鍵", incorrectAnswers: ["建", "健", "銉"] },
+            { time: 15, question: "指定錯別字: 「大家( )發言，氣氛熱烈。」應填入？", correctAnswer: "踴躍", incorrectAnswers: ["湧躍", "湧踴", "躍湧"] },
+            { time: 15, question: "指定錯別字: 「對於他的離世，我們都感到( )。」應填入？", correctAnswer: "惋惜", incorrectAnswers: ["腕惜", "晚惜", "宛惜"] },
+            { time: 15, question: "指定錯別字: 「這裏的樓房( )，人口眾多。」應填入？", correctAnswer: "稠密", incorrectAnswers: ["綢密", "愁密", "籌密"] },
+            { time: 15, question: "指定錯別字: 「我們要( )困難。」應填入？", correctAnswer: "克服", incorrectAnswers: ["克伏", "刻服", "克復"] },
+            { time: 15, question: "指定錯別字: 「我們要遵守( )。」應填入？", correctAnswer: "守則", incorrectAnswers: ["手則", "守責", "首則"] },
+            { time: 15, question: "指定錯別字: 「這裏的( )很舒服。」應填入？", correctAnswer: "座位", incorrectAnswers: ["坐位", "座衛", "坐衛"] },
+            { time: 15, question: "指定錯別字: 「他感到非常( )。」應填入？", correctAnswer: "恐懼", incorrectAnswers: ["恐據", "恐具", "恐拒"] },
+            { time: 15, question: "指定錯別字: 「肌肉( )，需要休息。」應填入？", correctAnswer: "鬆弛", incorrectAnswers: ["鬆馳", "鬆池", "松弛"] },
+            { time: 15, question: "指定錯別字: 「別( )了，快走吧。」(修復題)", correctAnswer: "慌張", incorrectAnswers: ["荒張", "慌長", "S長"] },
+        ];
+        // ----------------------------------------------------
+        // (GAME LOGIC)
+        // ----------------------------------------------------
+        
+        // DOM 
+        const startScreen = document.getElementById('start-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const endScreen = document.getElementById('end-screen');
+        const startButton = document.getElementById('start-button');
+        const restartButtons = document.querySelectorAll('.restart-button');
+        const questionCounter = document.getElementById('question-counter');
+        const timerDisplay = document.getElementById('timer');
+        const scoreDisplay = document.getElementById('score');
+        const questionText = document.getElementById('question-text');
+        const optionsGrid = document.getElementById('options-grid');
+        const feedback = document.getElementById('feedback');
+        const feedbackAnswer = document.getElementById('feedback-answer');
+        const nextButton = document.getElementById('next-button');
+        const finalScore = document.getElementById('final-score');
+        
+        const longAnswerContainer = document.getElementById('long-answer-container');
+        const longAnswerInput = document.getElementById('long-answer-input');
+        const submitLongAnswer = document.getElementById('submit-long-answer');
+
+        // VARS
+        let currentGameQuestions = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let timer;
+        let timeLeft = 15;
+        const TOTAL_SCORE = 20;
+
+        function shuffleArray(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex != 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        function startGame() {
+            const mcQuestions = allQuestions.filter(q => q.type !== 'long');
+            const laQuestions = allQuestions.filter(q => q.type === 'long');
+            
+            const shuffledMC = shuffleArray(mcQuestions).slice(0, 8);
+            const shuffledLA = shuffleArray(laQuestions).slice(0, 2);
+            
+            currentGameQuestions = shuffleArray([...shuffledMC, ...shuffledLA]);
+            
+            currentQuestionIndex = 0;
+            score = 0;
+            startScreen.style.display = 'none';
+            endScreen.style.display = 'none';
+            quizScreen.style.display = 'block';
+            scoreDisplay.textContent = `Score: 0 / ${TOTAL_SCORE}`;
+            
+            showQuestion();
+        }
+
+        function showQuestion() {
+            resetQuestionState();
+            const question = currentGameQuestions[currentQuestionIndex];
+            
+            questionText.textContent = question.question;
+            questionCounter.textContent = `Question ${currentQuestionIndex + 1} / 10`;
+            
+            timeLeft = question.time || 15;
+            timerDisplay.textContent = timeLeft;
+            if (timeLeft > 15) {
+                timerDisplay.style.borderColor = "var(--secondary-color)";
+                timerDisplay.style.color = "var(--secondary-color)";
+            }
+            
+            if (question.type === "long") {
+                optionsGrid.style.display = 'none';
+                longAnswerContainer.style.display = 'block';
+                longAnswerInput.value = '';
+                submitLongAnswer.onclick = submitLongAnswerHandler; 
+            } else {
+                optionsGrid.style.display = 'grid';
+                longAnswerContainer.style.display = 'none';
+                
+                let options = [];
+                if (question.correctAnswer === "True" || question.correctAnswer === "False" || question.correctAnswer === "Not Given") {
+                    options = ["True", "False", "Not Given"];
+                } else {
+                    options = [question.correctAnswer, ...question.incorrectAnswers];
+                }
+                
+                const shuffledOptions = shuffleArray([...options]);
+                
+                optionsGrid.innerHTML = '';
+                
+                if (shuffledOptions.length <= 3) {
+                    optionsGrid.style.gridTemplateColumns = '1fr';
+                } else {
+                    optionsGrid.style.gridTemplateColumns = '1fr 1fr';
+                }
+
+                shuffledOptions.forEach(option => {
+                    const button = document.createElement('button');
+                    button.textContent = option;
+                    button.classList.add('option-button');
+                    button.onclick = selectMCQAnswer; 
+                    optionsGrid.appendChild(button);
+                });
+            }
+            
+            startTimer();
+        }
+
+        function resetQuestionState() {
+            feedback.textContent = '';
+            feedbackAnswer.textContent = '';
+            nextButton.style.display = 'none';
+            timerDisplay.classList.remove('warning');
+            timerDisplay.style.borderColor = "var(--primary-color)";
+            timerDisplay.style.color = "var(--primary-color)";
+            
+            optionsGrid.style.display = 'none';
+            longAnswerContainer.style.display = 'none';
+            
+            document.querySelectorAll('.option-button').forEach(button => {
+                button.disabled = false;
+                button.onclick = null;
+            });
+            longAnswerInput.disabled = false;
+            submitLongAnswer.disabled = false;
+            submitLongAnswer.onclick = null;
+        }
+
+        function startTimer() {
+            timer = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = timeLeft;
+                if (timeLeft <= 5) {
+                    timerDisplay.classList.add('warning');
+                    timerDisplay.style.borderColor = "var(--incorrect-color)";
+                    timerDisplay.style.color = "var(--incorrect-color)";
+                }
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    timeUp();
+                }
+            }, 1000);
+        }
+
+        function timeUp() {
+            clearInterval(timer);
+            feedback.textContent = "Times up! 0 marks";
+            feedback.style.color = "var(--warning-color)";
+            
+            const question = currentGameQuestions[currentQuestionIndex];
+            if (question.type === "long") {
+                feedbackAnswer.textContent = question.feedback; 
+            }
+            
+            disableOptions();
+            showCorrectAnswer();
+            nextButton.style.display = 'block';
+        }
+
+        function selectMCQAnswer(e) {
+            clearInterval(timer);
+            const selectedButton = e.target;
+            const selectedAnswer = selectedButton.textContent;
+            const correctAnswer = currentGameQuestions[currentQuestionIndex].correctAnswer;
+
+            disableOptions();
+
+            if (selectedAnswer === correctAnswer) {
+                score += 2;
+                scoreDisplay.textContent = `Score: ${score} / ${TOTAL_SCORE}`;
+                feedback.textContent = "Correct! +2 marks";
+                feedback.style.color = "var(--correct-color)";
+                selectedButton.classList.add('correct');
+            } else {
+                feedback.textContent = "Incorrect. 0 marks";
+                feedback.style.color = "var(--incorrect-color)";
+                selectedButton.classList.add('incorrect');
+                showCorrectAnswer();
+            }
+            
+            nextButton.style.display = 'block';
+        }
+        
+        function submitLongAnswerHandler() {
+            clearInterval(timer);
+            const userAnswer = longAnswerInput.value;
+            const question = currentGameQuestions[currentQuestionIndex];
+            
+            disableOptions();
+
+            let fullMarkMatchCount = 0;
+            for (const key of question.fullMarkKeys) {
+                if (userAnswer.includes(key)) {
+                    fullMarkMatchCount++;
+                }
+            }
+
+            if (fullMarkMatchCount === question.fullMarkKeys.length) {
+                score += 2;
+                scoreDisplay.textContent = `Score: ${score} / ${TOTAL_SCORE}`;
+                feedback.textContent = "Fully correct! +2 marks";
+                feedback.style.color = "var(--correct-color)";
+            } else {
+                let partialMarkMatchCount = 0;
+                for (const key of question.partialMarkKeys) {
+                    if (userAnswer.includes(key)) {
+                        partialMarkMatchCount++;
+                        break; 
+                    }
+                }
+
+                if (fullMarkMatchCount > 0 || partialMarkMatchCount > 0) {
+                    // --- 1分 ---
+                    score += 1;
+                    scoreDisplay.textContent = `Score: ${score} / ${TOTAL_SCORE}`;
+                    feedback.textContent = "Partially Correct +1 mark";
+                    feedback.style.color = "var(--warning-color)";
+                } else {
+                    // --- 0分 ---
+                    feedback.textContent = "Incorrect. 0 marks";
+                    feedback.style.color = "var(--incorrect-color)";
+                }
+            }
+            
+            feedbackAnswer.textContent = question.feedback; 
+            nextButton.style.display = 'block';
+        }
+
+        function showCorrectAnswer() {
+             const question = currentGameQuestions[currentQuestionIndex];
+             if (question.type !== "long") {
+                const correctAnswer = question.correctAnswer;
+                document.querySelectorAll('.option-button').forEach(button => {
+                    if (button.textContent === correctAnswer) {
+                        button.classList.add('correct');
+                    }
+                });
+             }
+        }
+
+        function disableOptions() {
+            document.querySelectorAll('.option-button').forEach(button => {
+                button.disabled = true;
+                button.onclick = null;
+            });
+            longAnswerInput.disabled = true;
+            submitLongAnswer.disabled = true;
+            submitLongAnswer.onclick = null;
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < currentGameQuestions.length) {
+                showQuestion();
+            } else {
+                showEndScreen();
+            }
+        }
+
+        // --- THIS IS THE MODIFIED FUNCTION ---
+        function showEndScreen() {
+            quizScreen.style.display = 'none';
+            endScreen.style.display = 'block';
+            finalScore.textContent = `Your final score: ${score} / ${TOTAL_SCORE}`;
+            
+            // --- NEW COOKIE LOGIC ---
+            // 1. Get the old score from the cookie
+            const oldScoreStr = getCookie("score");
+            const oldScore = parseInt(oldScoreStr || "0", 10);
+            
+            // 2. Calculate the new total score (old score + score from this game)
+            // 'score' is the variable from this challenge
+            const newTotalScore = oldScore + score; 
+
+            // 3. Save the new total score back to the cookie
+            // Set it for 10 year (3650 days)
+            setCookie("score", newTotalScore, 3650);
+            
+            console.log(`Old score: ${oldScore}, Score from this game: ${score}, New total score: ${newTotalScore}`);
+            // --- END NEW LOGIC ---
+        }
+        // --- END MODIFIED FUNCTION ---
+
+
+        startButton.addEventListener('click', startGame);
+        nextButton.addEventListener('click', nextQuestion);
+        restartButtons.forEach(button => button.addEventListener('click', startGame));
+        
+    </script>
+</body>
+</html>

@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>閱讀挑戰 - 《搬家》</title>
+    <link rel="icon" type="image/x-icon" href="../../icon.png">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
+
+        :root {
+            --primary-color: #4A90E2;
+            --secondary-color: #50E3C2;
+            --correct-color: #28a745;
+            --incorrect-color: #dc3545;
+            --warning-color: #db7B2b;
+            --bg-color: #f4f7f9;
+            --text-color: #333;
+            --white: #FFFFFF;
+            --border-color: #ddd;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 1200px;
+            background-color: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            text-align: center;
+        }
+
+        #start-screen, #end-screen {
+            padding: 40px 50px;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+        
+        h2 {
+            color: var(--text-color);
+            margin-top: 0;
+        }
+
+        #start-screen p {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: var(--text-color);
+        }
+
+        .credits {
+            font-size: 0.9rem !important;
+            color: #888 !important;
+            margin-top: 20px;
+        }
+
+        /* Reading Text Container */
+        #reading-text-container {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: left;
+            line-height: 1.8;
+            background-color: #fdfdfd;
+        }
+        
+        #reading-text-container h3 {
+            text-align: center;
+            margin-top: 0;
+            color: var(--primary-color);
+        }
+        
+        #reading-text-container p {
+            margin-bottom: 15px;
+            color: var(--text-color);
+            text-align: justify;
+            text-indent: 2em;
+        }
+
+        #start-button, .restart-button {
+            background-color: var(--primary-color);
+            color: var(--white);
+            border: none;
+            padding: 15px 35px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        #start-button:hover, .restart-button:hover {
+            background-color: #357ABD;
+            transform: translateY(-2px);
+        }
+
+        #quiz-screen {
+            display: none;
+            width: 100%;
+        }
+        
+        #quiz-layout {
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+        }
+        
+        /* Left side: Reading text */
+        #quiz-reading-panel {
+            flex-basis: 50%;
+            padding: 20px 30px;
+            overflow-y: auto;
+            max-height: 80vh; 
+            text-align: left;
+            line-height: 1.7;
+            border-right: 2px solid #f0f0f0;
+            box-sizing: border-box;
+            background-color: #fafafa;
+        }
+        
+        #quiz-reading-panel h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+            text-align: center;
+        }
+        
+        #quiz-reading-panel p {
+            margin-bottom: 15px;
+            text-indent: 2em;
+        }
+        
+        /* Right side: Questions */
+        #quiz-question-panel {
+            flex-basis: 50%;
+            padding: 20px 30px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #header {
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        #header div {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+        #score {
+            color: var(--primary-color);
+        }
+
+        #question-container {
+            width: 100%;
+        }
+
+        #question-text {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            min-height: 60px;
+            line-height: 1.5;
+        }
+
+        #timer {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 20px;
+            border: 4px solid var(--primary-color);
+            transition: all 0.3s;
+        }
+
+        #timer.warning {
+            color: var(--incorrect-color);
+            border-color: var(--incorrect-color);
+        }
+
+        #options-grid {
+            display: grid;
+            grid-template-columns: 1fr; 
+            gap: 12px;
+            margin-top: 20px;
+        }
+        
+        #long-answer-container {
+            display: none;
+            margin-top: 20px;
+        }
+        
+        #long-answer-input {
+            width: 95%;
+            height: 100px;
+            font-size: 1rem;
+            font-family: 'Noto Sans TC', sans-serif;
+            padding: 10px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+        }
+        
+        #submit-long-answer {
+            background-color: var(--secondary-color);
+            color: var(--white);
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        
+        #submit-long-answer:hover {
+            background-color: #40B89F;
+            transform: translateY(-2px);
+        }
+        
+        #submit-long-answer:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .option-button {
+            background-color: var(--white);
+            border: 2px solid var(--border-color);
+            color: var(--text-color);
+            padding: 18px;
+            font-size: 1rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+        }
+
+        .option-button:hover:not(:disabled) {
+            background-color: #f0f5ff;
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .option-button.correct {
+            background-color: var(--correct-color);
+            border-color: var(--correct-color);
+            color: var(--white);
+        }
+
+        .option-button.incorrect {
+            background-color: var(--incorrect-color);
+            border-color: var(--incorrect-color);
+            color: var(--white);
+        }
+
+        .option-button:disabled {
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+
+        #feedback-container {
+            margin-top: 20px;
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #feedback {
+            font-size: 1.2rem;
+            font-weight: 700;
+            text-align: center;
+            padding: 0 10px;
+        }
+        
+        #feedback-answer {
+            font-size: 1rem;
+            font-weight: 400;
+            color: #555;
+            margin-top: 10px;
+            text-align: left;
+            padding: 0 10px;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        #next-button {
+            background-color: var(--secondary-color);
+            color: var(--white);
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+            display: none;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        #next-button:hover {
+            background-color: #40B89F;
+            transform: translateY(-2px);
+        }
+
+        #end-screen {
+            display: none;
+        }
+
+        #final-score {
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            font-weight: 700;
+        }
+        
+        /* Responsive layout for mobile */
+        @media (max-width: 768px) {
+            #quiz-layout {
+                flex-direction: column;
+            }
+            #quiz-reading-panel {
+                flex-basis: auto;
+                max-height: 300px; 
+                border-right: none;
+                border-bottom: 2px solid #f0f0f0;
+                padding: 15px;
+            }
+            #quiz-question-panel {
+                flex-basis: auto;
+                padding: 20px 15px;
+            }
+            #header {
+                padding-bottom: 15px;
+                margin-bottom: 15px;
+            }
+            #question-text {
+                font-size: 1.2rem;
+            }
+            #game-container {
+                padding: 15px;
+            }
+            #start-screen, #end-screen {
+                padding: 30px 20px;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+
+        <div id="start-screen">
+            <h1>閱讀挑戰</h1>
+            <h2>《搬家》</h2>
+            <p>請閱讀以下文章，然後開始挑戰。</p>
+            
+            <div id="reading-text-container">
+                <h3>搬家</h3>
+                <p>(1) 一提起搬家,我心裏就有一種說不丄來的滋味。</p>
+                <p>(2) 我的家是1976年的冬末從遙遠的北方搬到鎮海來的。還在火車上的時候,我就開始「描繪」我們的新家了:高樓大廈,一套新房。可是,當汽車到了鎮海俞范時,爸爸指著一排矮房對我說:「孩子,這就是咱們的新家。」 新家的陳設非常簡陋,一張大床,兩個包裹,一個碗櫥各和兩隻木板箱子。 當天,我們便在新家安頓了下來。三月的頭一天,我在基地附近的農村小學上學了。</p>
+                <p>(3) 當我從一加一學起到會算四則應用題的時候,巍巍的煉油塔升了起來, 一個個圓形的球罐整齊地排列起來,像蜘蛛網似的管道也架起來了。一個煉油廠建成了。</p>
+                <p>(4) 一天,爸爸回來說:「快搬家,搬到新樓去!」當天晚上,我們全家住進了新房。</p>
+                <p>(5) a. 那一年國慶節,我們家還添置了一套新家具。b.自從搬進新房後, 我們家的生活慢慢正常化了。c.年底,我們又買了一台彩色電視,正趕上「春節晚會」。</p>
+                <p>(6) 上個星期,爸爸從北京出差回來了。晚上,我們一家人圍著看電視, 爸爸忽然若有所思地說:「我們又要搬家了。」「搬到哪兒去?」「住高樓。」 爸爸接著說:「我們國家正在興建一批現代化的大煉油廠,廠前區要蓋起一幢幢高樓,有電影院、商店、學校......那才叫...」</p>
+                <p>(7) 爸爸顯得快活。最後,他又深情地說:「孩子,這哪裏僅僅是個家, 這是...」說著,他指著電視機螢幕上正放映著的《琳琅滿目》的鏡頭說: 「我們的國家就是一個大家庭,我們都是這個家庭裏的主人!」</p>
+            </div>
+            
+            <p class="credits">感謝 @Fox Fish 和 @Melon Rex 建議此閱讀理解題目。</p>
+            <p class="credits">資料來源：HKEDCITY 費安娜老師</p>
+
+            <button id="start-button">開始挑戰</button>
+        </div>
+
+        <div id="quiz-screen">
+            <div id="quiz-layout">
+                
+                <div id="quiz-reading-panel">
+                    <h3>搬家</h3>
+                    <p>(1) 一提起搬家,我心裏就有一種說不丄來的滋味。</p>
+                    <p>(2) 我的家是1976年的冬末從遙遠的北方搬到鎮海來的。還在火車上的時候,我就開始「描繪」我們的新家了:高樓大廈,一套新房。可是,當汽車到了鎮海俞范時,爸爸指著一排矮房對我說:「孩子,這就是咱們的新家。」 新家的陳設非常簡陋,一張大床,兩個包裹,一個碗櫥各和兩隻木板箱子。 當天,我們便在新家安頓了下來。三月的頭一天,我在基地附近的農村小學上學了。</p>
+                    <p>(3) 當我從一加一學起到會算四則應用題的時候,巍巍的煉油塔升了起來, 一個個圓形的球罐整齊地排列起來,像蜘蛛網似的管道也架起來了。一個煉油廠建成了。</p>
+                    <p>(4) 一天,爸爸回來說:「快搬家,搬到新樓去!」當天晚上,我們全家住進了新房。</p>
+                    <p>(5) a. 那一年國慶節,我們家還添置了一套新家具。b.自從搬進新房後, 我們家的生活慢慢正常化了。c.年底,我們又買了一台彩色電視,正趕上「春節晚會」。</p>
+                    <p>(6) 上個星期,爸爸從北京出差回來了。晚上,我們一家人圍著看電視, 爸爸忽然若有所思地說:「我們又要搬家了。」「搬到哪兒去?」「住高樓。」 爸爸接著說:「我們國家正在興建一批現代化的大煉油廠,廠前區要蓋起一幢幢高樓,有電影院、商店、學校......那才叫...」</p>
+                    <p>(7) 爸爸顯得快活。最後,他又深情地說:「孩子,這哪裏僅僅是個家, 這是...」說著,他指著電視機螢幕上正放映著的《琳琅滿目》的鏡頭說: 「我們的國家就是一個大家庭,我們都是這個家庭裏的主人!」</p>
+                </div>
+                
+                <div id="quiz-question-panel">
+                    <div id="header">
+                        <div id="question-counter">Question 1 / X</div>
+                        <div id="score">Score: 0 / X</div>
+                    </div>
+                    <div id="question-container">
+                        <div id="timer">30</div>
+                        <div id="question-text">Question goes here...</div>
+                        
+                        <div id="options-grid">
+                            </div>
+                        
+                        <div id="long-answer-container">
+                            <textarea id="long-answer-input" placeholder="請輸入答案..."></textarea>
+                            <button id="submit-long-answer">提交</button>
+                        </div>
+                        
+                        <div id="feedback-container">
+                            <div id="feedback"></div>
+                            <div id="feedback-answer"></div> 
+                            <button id="next-button">下一題</button>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+
+        <div id="end-screen">
+            <h1>挑戰完成!</h1>
+            <div id="final-score">Your total score: 0 / 0</div>
+            <p>多多練習，精益求精!</p>
+            <button class="restart-button">再試一次</button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- COOKIE HELPER FUNCTIONS ---
+        function setCookie(name, value, days) {
+            let expires = "";
+            if (days) {
+                const date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + (value || "") + expires + "; path=/; SameSite=Lax";
+        }
+
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+
+        // --- QUESTIONS (Sourced from movehome.html) ---
+        const allQuestions = [
+            // Q1 (MCQ) - Vocab
+            { 
+                time: 20, 
+                question: "根據第(2)段,「描繪」我們的新家了,「描繪」的意思最接近甚麼?", 
+                correctAnswer: "想像", 
+                incorrectAnswers: ["畫畫", "寫作", "忘記"]
+            },
+            // Q2 (MCQ) - Vocab
+            { 
+                time: 20, 
+                question: "根據第(2)段,「新家的陳設非常簡陋」,「陳設」的意思最接近甚麼?", 
+                correctAnswer: "傢具和佈置", 
+                incorrectAnswers: ["晚餐", "衣服", "交通"]
+            },
+            // Q3 (MCQ) - Vocab
+            { 
+                time: 20, 
+                question: "根據第(3)段,「巍巍的煉油塔」,「巍巍」是形容...?", 
+                correctAnswer: "高大的樣子", 
+                incorrectAnswers: ["渺小的樣子", "響亮的聲音", "快速的動作"]
+            },
+            // Q4 (MCQ) - Vocab
+            { 
+                time: 20, 
+                question: "根據第(7)段, 電視正放映著的《琳琅滿目》, 「琳琅滿目」是形容...?", 
+                correctAnswer: "東西很多很精美", 
+                incorrectAnswers: ["食物很好吃", "地方很空曠", "顏色很鮮艷"]
+            },
+            // Q5 (Long) - Comprehension
+            { 
+                time: 45, 
+                type: "long",
+                question: "根據第(2)段, 作者一家初到鎮海時, 所住的「新家」是怎樣的?", 
+                fullMarkKeys: ["矮房", "簡陋"], 
+                partialMarkKeys: ["矮房", "簡陋", "一張床", "木板箱"],
+                feedback: "參考答案 (2分): 是一排矮房, 陳設非常簡陋, 只有一張床、包裹、碗櫥和箱子。"
+            },
+            // Q6 (MCQ) - Structure
+            { 
+                time: 30, 
+                question: "第(5)段中的a, b, c三句, 依邏輯順序應如何排列才最合理?", 
+                correctAnswer: "b -> a -> c", 
+                incorrectAnswers: ["a -> b -> c", "c -> a -> b", "a -> c -> b"]
+            },
+            // Q7 (MCQ) - Comprehension
+            { 
+                time: 30, 
+                question: "第(3)段(描述煉油廠建成)在文中的主要作用是甚麼?", 
+                correctAnswer: "顯示時間過去及國家的建設", 
+                incorrectAnswers: ["說明作者數學很好", "說明建工廠很辛苦", "描寫煉油塔的風景"]
+            },
+            // Q8 (Long) - Comprehension
+            { 
+                time: 60, 
+                type: "long",
+                question: "根據最後一段, 爸爸為甚麼說「這哪裏僅僅是個家」?", 
+                fullMarkKeys: ["生活", "變好", "希望", "國家"], 
+                partialMarkKeys: ["生活", "希望", "國家", "煉油廠"],
+                feedback: "參考答案 (2分): 因為新家代表的不只是住處, 更代表了生活變好、充滿希望的未來, 以及國家(或煉油廠)的發展成果。"
+            },
+            // Q9 (Long) - Main Idea
+            { 
+                time: 60, 
+                type: "long",
+                question: "試寫出本文的中心思想。", 
+                fullMarkKeys: ["搬家", "生活", "改善"], 
+                partialMarkKeys: ["搬家", "國家", "建設", "變好"],
+                feedback: "參考答案 (2分): 本文通過記述一家人兩次搬家的經歷, 反映了生活條件的巨大改善, 以及國家建設(煉油廠)帶來的變化。"
+            }
+        ];
+        
+        // ----------------------------------------------------
+        // (GAME LOGIC)
+        // ----------------------------------------------------
+        
+        // DOM 
+        const startScreen = document.getElementById('start-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const endScreen = document.getElementById('end-screen');
+        const startButton = document.getElementById('start-button');
+        const restartButtons = document.querySelectorAll('.restart-button');
+        const questionCounter = document.getElementById('question-counter');
+        const timerDisplay = document.getElementById('timer');
+        const scoreDisplay = document.getElementById('score');
+        const questionText = document.getElementById('question-text');
+        const optionsGrid = document.getElementById('options-grid');
+        const feedback = document.getElementById('feedback');
+        const feedbackAnswer = document.getElementById('feedback-answer');
+        const nextButton = document.getElementById('next-button');
+        const finalScore = document.getElementById('final-score');
+        
+        const longAnswerContainer = document.getElementById('long-answer-container');
+        const longAnswerInput = document.getElementById('long-answer-input');
+        const submitLongAnswer = document.getElementById('submit-long-answer');
+        
+        // Calculate Total Score Dynamically
+        const TOTAL_SCORE = allQuestions.length * 2; 
+
+        // VARS
+        let currentGameQuestions = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let timer;
+        let timeLeft = 30;
+
+        function shuffleArray(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex != 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        function startGame() {
+            // Keep sequential order for reading comp
+            currentGameQuestions = [...allQuestions]; 
+            
+            currentQuestionIndex = 0;
+            score = 0;
+            startScreen.style.display = 'none';
+            endScreen.style.display = 'none';
+            quizScreen.style.display = 'block';
+            quizScreen.style.display = 'flex'; 
+            
+            scoreDisplay.textContent = `Score: 0 / ${TOTAL_SCORE}`;
+            
+            showQuestion();
+        }
+
+        function showQuestion() {
+            resetQuestionState();
+            const question = currentGameQuestions[currentQuestionIndex];
+            
+            questionText.innerHTML = question.question;
+            questionCounter.textContent = `Question ${currentQuestionIndex + 1} / ${currentGameQuestions.length}`;
+            
+            timeLeft = question.time || 30;
+            timerDisplay.textContent = timeLeft;
+            
+            if (question.type === "long") {
+                optionsGrid.style.display = 'none';
+                longAnswerContainer.style.display = 'block';
+                longAnswerInput.value = '';
+                submitLongAnswer.onclick = submitLongAnswerHandler; 
+            } else {
+                optionsGrid.style.display = 'grid';
+                longAnswerContainer.style.display = 'none';
+                
+                let options = [question.correctAnswer, ...question.incorrectAnswers];
+                const shuffledOptions = shuffleArray([...options]);
+                
+                optionsGrid.innerHTML = '';
+                optionsGrid.style.gridTemplateColumns = '1fr';
+
+                shuffledOptions.forEach(option => {
+                    const button = document.createElement('button');
+                    button.textContent = option;
+                    button.classList.add('option-button');
+                    button.onclick = selectMCQAnswer; 
+                    optionsGrid.appendChild(button);
+                });
+            }
+            
+            startTimer();
+        }
+
+        function resetQuestionState() {
+            feedback.textContent = '';
+            feedbackAnswer.textContent = '';
+            nextButton.style.display = 'none';
+            timerDisplay.classList.remove('warning');
+            timerDisplay.style.borderColor = "var(--primary-color)";
+            timerDisplay.style.color = "var(--primary-color)";
+            
+            optionsGrid.style.display = 'none';
+            longAnswerContainer.style.display = 'none';
+            
+            document.querySelectorAll('.option-button').forEach(button => {
+                button.disabled = false;
+                button.onclick = null;
+            });
+            longAnswerInput.disabled = false;
+            submitLongAnswer.disabled = false;
+            submitLongAnswer.onclick = null;
+        }
+
+        function startTimer() {
+            timer = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = timeLeft;
+                if (timeLeft <= 5) {
+                    timerDisplay.classList.add('warning');
+                }
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    timeUp();
+                }
+            }, 1000);
+        }
+
+        function timeUp() {
+            clearInterval(timer);
+            feedback.textContent = "時間到! 0分";
+            feedback.style.color = "var(--warning-color)";
+            
+            const question = currentGameQuestions[currentQuestionIndex];
+            if (question.type === "long") {
+                feedbackAnswer.textContent = question.feedback; 
+            }
+            
+            disableOptions();
+            showCorrectAnswer();
+            nextButton.style.display = 'block';
+        }
+
+        function selectMCQAnswer(e) {
+            clearInterval(timer);
+            const selectedButton = e.target;
+            const selectedAnswer = selectedButton.textContent;
+            const correctAnswer = currentGameQuestions[currentQuestionIndex].correctAnswer;
+
+            disableOptions();
+
+            if (selectedAnswer === correctAnswer) {
+                score += 2;
+                scoreDisplay.textContent = `Score: ${score} / ${TOTAL_SCORE}`;
+                feedback.textContent = "正確! +2分";
+                feedback.style.color = "var(--correct-color)";
+                selectedButton.classList.add('correct');
+            } else {
+                feedback.textContent = "不正確. 0分";
+                feedback.style.color = "var(--incorrect-color)";
+                selectedButton.classList.add('incorrect');
+                showCorrectAnswer();
+            }
+            
+            nextButton.style.display = 'block';
+        }
+        
+        function submitLongAnswerHandler() {
+            clearInterval(timer);
+            const userAnswer = longAnswerInput.value;
+            const question = currentGameQuestions[currentQuestionIndex];
+            
+            disableOptions();
+
+            let fullMarkMatchCount = 0;
+            if (question.fullMarkKeys) {
+                for (const key of question.fullMarkKeys) {
+                    if (userAnswer.includes(key)) {
+                        fullMarkMatchCount++;
+                    }
+                }
+            }
+
+            if (question.fullMarkKeys && fullMarkMatchCount >= question.fullMarkKeys.length) {
+                score += 2;
+                scoreDisplay.textContent = `Score: ${score} / ${TOTAL_SCORE}`;
+                feedback.textContent = "完全正確! +2分";
+                feedback.style.color = "var(--correct-color)";
+            } else {
+                let partialMarkMatchCount = 0;
+                if (question.partialMarkKeys) {
+                    for (const key of question.partialMarkKeys) {
+                        if (userAnswer.includes(key)) {
+                            partialMarkMatchCount++;
+                            break; 
+                        }
+                    }
+                }
+
+                if (fullMarkMatchCount > 0 || partialMarkMatchCount > 0) {
+                    score += 1;
+                    scoreDisplay.textContent = `Score: ${score} / ${TOTAL_SCORE}`;
+                    feedback.textContent = "部分正確 +1分";
+                    feedback.style.color = "var(--warning-color)";
+                } else {
+                    feedback.textContent = "不正確. 0分";
+                    feedback.style.color = "var(--incorrect-color)";
+                }
+            }
+            
+            feedbackAnswer.textContent = question.feedback; 
+            nextButton.style.display = 'block';
+        }
+
+        function showCorrectAnswer() {
+             const question = currentGameQuestions[currentQuestionIndex];
+             if (question.type !== "long") {
+                const correctAnswer = question.correctAnswer;
+                document.querySelectorAll('.option-button').forEach(button => {
+                    if (button.textContent === correctAnswer) {
+                        button.classList.add('correct');
+                    }
+                });
+             }
+        }
+
+        function disableOptions() {
+            document.querySelectorAll('.option-button').forEach(button => {
+                button.disabled = true;
+                button.onclick = null;
+            });
+            longAnswerInput.disabled = true;
+            submitLongAnswer.disabled = true;
+            submitLongAnswer.onclick = null;
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < currentGameQuestions.length) {
+                showQuestion();
+            } else {
+                showEndScreen();
+            }
+        }
+
+        function showEndScreen() {
+            quizScreen.style.display = 'none';
+            endScreen.style.display = 'block';
+            finalScore.textContent = `你的總分: ${score} / ${TOTAL_SCORE}`;
+            
+            // --- COOKIE LOGIC ---
+            const oldScoreStr = getCookie("score");
+            const oldScore = parseInt(oldScoreStr || "0", 10);
+            const newTotalScore = oldScore + score; 
+            setCookie("score", newTotalScore, 3650);
+            console.log(`Score Updated: ${oldScore} + ${score} = ${newTotalScore}`);
+        }
+
+        startButton.addEventListener('click', startGame);
+        nextButton.addEventListener('click', nextQuestion);
+        restartButtons.forEach(button => button.addEventListener('click', startGame));
+        
+    </script>
+</body>
+</html>

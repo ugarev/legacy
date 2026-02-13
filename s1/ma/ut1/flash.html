@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MA UT 1</title>
+    <!-- Using the same styles as your quiz app -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
+
+        :root {
+            --primary-color: #4A90E2;
+            --secondary-color: #50E3C2;
+            --correct-color: #28a745;
+            --incorrect-color: #dc3545;
+            --warning-color: #db7B2b;
+            --bg-color: #f4f7f9;
+            --text-color: #333;
+            --white: #FFFFFF;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 900px; /* Kept the same max-width */
+            background-color: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            text-align: center;
+        }
+
+        #start-screen, #end-screen {
+            padding: 50px;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        #start-screen p {
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+        }
+
+        #start-button, .restart-button {
+            background-color: var(--primary-color);
+            color: var(--white);
+            border: none;
+            padding: 15px 35px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        #start-button:hover, .restart-button:hover {
+            background-color: #357ABD;
+            transform: translateY(-2px);
+        }
+        
+        /* This is the main study screen */
+        #flashcard-screen {
+            display: none;
+        }
+
+        #header {
+            padding: 20px 30px;
+            background-color: var(--primary-color);
+            color: var(--white);
+            display: flex;
+            justify-content: center; /* Centered the counter */
+            align-items: center;
+            position: relative;
+        }
+
+        #header div {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+        
+        /* Container for the card and buttons */
+        #card-container {
+            padding: 30px 40px;
+        }
+
+        /* --- Flashcard Styles --- */
+        #flashcard-wrapper {
+            /* Sets up the 3D space for the flip */
+            perspective: 1000px;
+            min-height: 300px;
+            margin-bottom: 25px;
+        }
+
+        #flashcard {
+            position: relative;
+            width: 100%;
+            height: 300px;
+            /* Handles the 3D flip */
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+            cursor: pointer;
+        }
+
+        /* State when flipped */
+        #flashcard.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        /* Front and Back common styles */
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            /* Hides the back-face during flip */
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.07);
+        }
+
+        #card-front {
+            background-color: var(--white);
+            border: 2px solid var(--primary-color);
+            color: var(--text-color);
+            font-size: 1.8rem;
+            font-weight: 700;
+            line-height: 1.5;
+        }
+
+        #card-back {
+            background-color: #eef5ff; /* Light blue, from your timer */
+            border: 2px solid var(--primary-color);
+            color: var(--text-color);
+            /* Positioned on the back */
+            transform: rotateY(180deg);
+            font-size: 1.4rem;
+            line-height: 1.6;
+        }
+        /* --- End Flashcard Styles --- */
+
+
+        /* Navigation buttons */
+        #nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+        
+        /* Flip button, styled like 'Next' from quiz */
+        #flip-button {
+            background-color: var(--primary-color);
+            color: var(--white);
+            border: none;
+            padding: 15px 35px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        #flip-button:hover {
+            background-color: #357ABD;
+            transform: translateY(-2px);
+        }
+        
+        /* Prev/Next buttons, styled like 'Next' from quiz */
+        #prev-button, #next-button {
+            background-color: var(--secondary-color);
+            color: var(--white);
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        
+        #prev-button:hover, #next-button:hover {
+            background-color: #40B89F;
+            transform: translateY(-2px);
+        }
+
+        #prev-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #end-screen {
+            display: none;
+        }
+
+        #final-score { /* Renamed for clarity, but same ID */
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            font-weight: 700;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+
+        <div id="start-screen">
+            <h1>S1 Math UT 1</h1>
+            <h2>Flashcards</h2>
+            <p>Click the card to flip it. Use the buttons to navigate.</p>
+            <button id="start-button">Start Studying</button>
+        </div>
+
+        <div id="flashcard-screen">
+            <div id="header">
+                <div id="card-counter">Card 1 / 10</div>
+            </div>
+            <div id="card-container">
+                
+                <!-- This wrapper holds the card -->
+                <div id="flashcard-wrapper">
+                    <div id="flashcard">
+                        <div id="card-front" class="card-face">
+                            <!-- Front content goes here -->
+                        </div>
+                        <div id="card-back" class="card-face">
+                            <!-- Back content goes here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Main 'Flip' button -->
+                <button id="flip-button">Flip Card</button>
+
+                <!-- Prev/Next navigation -->
+                <div id="nav-buttons">
+                    <button id="prev-button">Previous</button>
+                    <button id="next-button">Next</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="end-screen">
+            <h1>Study session done!</h1>
+            <div id="final-score">You've completed all the cards!</div>
+            <p>Practice makes perfect, keep revising!</p>
+            <button class="restart-button">Study Again</button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- MODULAR FLASHCARD DATA ---
+        // Just edit this array to change the flashcards
+        const allFlashcards = [
+    { 
+        front: "In 163 ÷ 13 = 12...7, what is 163 called?", 
+        back: "The Dividend (the number being divided)." 
+    },
+    { 
+        front: "In 163 ÷ 13 = 12...7, what is 13 called?", 
+        back: "The Divisor (the number you are dividing by)." 
+    },
+    { 
+        front: "In 163 ÷ 13 = 12...7, what is 12 called?", 
+        back: "The Quotient (the result of the division)." 
+    },
+    { 
+        front: "In 163 ÷ 13 = 12...7, what is 7 called?", 
+        back: "The Remainder (the amount left over)." 
+    },
+    { 
+        front: "What is a Prime Number?", 
+        back: "A whole number greater than 1 with exactly two factors: 1 and itself (e.g., 2, 3, 5, 7, 11)." 
+    },
+    { 
+        front: "What is a Composite Number?", 
+        back: "A whole number greater than 1 with more than two factors (e.g., 4, 6, 8, 9, 10)." 
+    },
+    { 
+        front: "What does H.C.F. stand for?", 
+        back: "Highest Common Factor (the largest factor shared by two or more numbers)." 
+    },
+    { 
+        front: "What does L.C.M. stand for?", 
+        back: "Lowest Common Multiple (the smallest multiple shared by two or more numbers)." 
+    },
+    { 
+        front: "Calculate: (-8) + (-5)", 
+        back: "-13" 
+    },
+    { 
+        front: "Calculate: (-10) + 4", 
+        back: "-6" 
+    },
+    { 
+        front: "Calculate: 12 - (-3)", 
+        back: "15 (Subtracting a negative is the same as adding a positive)." 
+    },
+    { 
+        front: "Calculate: (-5) - 9", 
+        back: "-14" 
+    },
+    { 
+        front: "Calculate: (-6) × (-4)", 
+        back: "24 (Negative times negative equals positive)." 
+    },
+    { 
+        front: "Calculate: (-8) × 3", 
+        back: "-24 (Negative times positive equals negative)." 
+    },
+    { 
+        front: "Calculate: (-20) ÷ (-5)", 
+        back: "4 (Negative divided by negative equals positive)." 
+    },
+    { 
+        front: "Calculate: 30 ÷ (-6)", 
+        back: "-5 (Positive divided by negative equals negative)." 
+    },
+    { 
+        front: "Order of Operations (BODMAS): 10 + (-4) × 3", 
+        back: "-2 (Multiply first: -4 × 3 = -12. Then add: 10 + (-12) = -2)." 
+    },
+    { 
+        front: "Order of Operations (BODMAS): (5 - 9) × (-2)", 
+        back: "8 (Brackets first: 5 - 9 = -4. Then multiply: -4 × (-2) = 8)." 
+    },
+    { 
+        front: "Round off 14.382 to 3 significant figures.", 
+        back: "14.4" 
+    },
+    { 
+        front: "Round off 0.07829 to 2 significant figures.", 
+        back: "0.078 (The first sig fig is 7, the second is 8)." 
+    },
+    { 
+        front: "Round off 5.961 to 2 decimal places.", 
+        back: "5.96" 
+    },
+    { 
+        front: "Round up 17.22 to 1 decimal place.", 
+        back: "17.3 (Even if the next digit is small, 'round up' forces it up)." 
+    },
+    { 
+        front: "Round down 8.79 to 1 decimal place.", 
+        back: "8.7 (Even if the next digit is large, 'round down' ignores it)." 
+    },
+    { 
+        front: "Estimate 49.8 × 4.1 by rounding to 1 significant figure.", 
+        back: "200 (50 × 4 = 200)." 
+    },
+    { 
+        front: "What are all the factors of 18?", 
+        back: "1, 2, 3, 6, 9, 18" 
+    },
+    { 
+        front: "What are the first five multiples of 6?", 
+        back: "6, 12, 18, 24, 30" 
+    },
+    { 
+        front: "Find the H.C.F. of 12 and 18.", 
+        back: "6" 
+    },
+    { 
+        front: "Find the L.C.M. of 10 and 15.", 
+        back: "30" 
+    },
+    { 
+        front: "List the prime numbers between 20 and 30.", 
+        back: "23, 29" 
+    },
+    { 
+        front: "What is the value of 3³ (3 cubed)?", 
+        back: "27 (3 × 3 × 3)" 
+    }
+];
+        // -------------------------------
+
+        
+        // DOM Elements
+        const startScreen = document.getElementById('start-screen');
+        const flashcardScreen = document.getElementById('flashcard-screen');
+        const endScreen = document.getElementById('end-screen');
+        const startButton = document.getElementById('start-button');
+        const restartButtons = document.querySelectorAll('.restart-button');
+        
+        const cardCounter = document.getElementById('card-counter');
+        const flashcardWrapper = document.getElementById('flashcard-wrapper');
+        const flashcard = document.getElementById('flashcard');
+        const cardFront = document.getElementById('card-front');
+        const cardBack = document.getElementById('card-back');
+        
+        const flipButton = document.getElementById('flip-button');
+        const prevButton = document.getElementById('prev-button');
+        const nextButton = document.getElementById('next-button');
+        
+        const finalScore = document.getElementById('final-score');
+
+        // Game Variables
+        let currentDeck = [];
+        let currentCardIndex = 0;
+        let isFlipped = false;
+
+        // Shuffle function (same as your quiz)
+        function shuffleArray(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex != 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        function startGame() {
+            // Shuffle the deck for this session
+            currentDeck = shuffleArray([...allFlashcards]);
+            currentCardIndex = 0;
+            
+            startScreen.style.display = 'none';
+            endScreen.style.display = 'none';
+            flashcardScreen.style.display = 'block';
+            
+            showCard();
+        }
+
+        function showCard() {
+            // Get the current card data
+            const card = currentDeck[currentCardIndex];
+            
+            // Populate the text
+            cardFront.textContent = card.front;
+            cardBack.textContent = card.back;
+            
+            // Update counter
+            cardCounter.textContent = `Card ${currentCardIndex + 1} / ${currentDeck.length}`;
+            
+            // Reset flip state
+            flashcard.classList.remove('is-flipped');
+            isFlipped = false;
+            
+            // Update button states
+            prevButton.disabled = (currentCardIndex === 0);
+            
+            if (currentCardIndex === currentDeck.length - 1) {
+                nextButton.textContent = "Finish";
+            } else {
+                nextButton.textContent = "Next";
+            }
+        }
+        
+        function flipCard() {
+            flashcard.classList.toggle('is-flipped');
+            isFlipped = !isFlipped;
+        }
+
+        function nextCard() {
+            if (currentCardIndex < currentDeck.length - 1) {
+                currentCardIndex++;
+                showCard();
+            } else {
+                // On the last card, "Next" becomes "Finish"
+                showEndScreen();
+            }
+        }
+
+        function prevCard() {
+            if (currentCardIndex > 0) {
+                currentCardIndex--;
+                showCard();
+            }
+        }
+
+        function showEndScreen() {
+            flashcardScreen.style.display = 'none';
+            endScreen.style.display = 'block';
+        }
+
+        // --- Event Listeners ---
+        startButton.addEventListener('click', startGame);
+        
+        // Flip the card by clicking the card itself OR the flip button
+        flashcardWrapper.addEventListener('click', flipCard);
+        flipButton.addEventListener('click', flipCard);
+        
+        nextButton.addEventListener('click', nextCard);
+        prevButton.addEventListener('click', prevCard);
+        
+        restartButtons.forEach(button => button.addEventListener('click', startGame));
+        
+    </script>
+</body>
+</html>

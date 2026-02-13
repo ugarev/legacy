@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vital Functions Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+
+        .correct-anim { animation: pulseGreen 0.5s ease; }
+        .wrong-anim { animation: shakeRed 0.5s ease; }
+
+        @keyframes pulseGreen {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); background-color: #dcfce7; }
+            100% { transform: scale(1); }
+        }
+        @keyframes shakeRed {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); background-color: #fee2e2; }
+            75% { transform: translateX(5px); }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-800 font-sans pb-12">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+                <div class="bg-rose-500 text-white p-2 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+                </div>
+                <h1 class="text-xl font-bold text-slate-800">Life Explorer</h1>
+            </div>
+            
+            <div class="flex bg-slate-100 p-1 rounded-lg overflow-x-auto w-full md:w-auto">
+                <button onclick="setTab('functions')" id="tab-functions" class="whitespace-nowrap flex-1 md:flex-none px-6 py-2 rounded-md text-sm font-bold transition-all bg-white text-rose-600 shadow-sm">7 Vital Functions</button>
+                <button onclick="setTab('quiz')" id="tab-quiz" class="whitespace-nowrap flex-1 md:flex-none px-6 py-2 rounded-md text-sm font-bold transition-all text-slate-500 hover:text-slate-700">Living vs. Non-Living</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-8">
+
+        <!-- TAB 1: VITAL FUNCTIONS -->
+        <div id="view-functions" class="fade-in">
+            <div class="text-center mb-8">
+                <h2 class="text-2xl font-bold text-rose-900">What makes something alive?</h2>
+                <p class="text-slate-500">All living things perform these 7 vital functions.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- 1. Food -->
+                <div class="card-hover bg-white p-6 rounded-2xl border border-slate-200 cursor-pointer group" onclick="showDetail('food')">
+                    <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-2xl mb-4 group-hover:bg-orange-200 transition-colors">🍔</div>
+                    <h3 class="text-lg font-bold text-slate-800 mb-2">1. Need Food</h3>
+                    <p class="text-slate-500 text-sm">Living things need energy to survive and function.</p>
+                </div>
+
+                <!-- 2. Breathe -->
+                <div class="card-hover bg-white p-6 rounded-2xl border border-slate-200 cursor-pointer group" onclick="showDetail('breathe')">
+                    <div class="w-12 h-12 bg-sky-100 text-sky-600 rounded-full flex items-center justify-center text-2xl mb-4 group-hover:bg-sky-200 transition-colors">💨</div>
+                    <h3 class="text-lg font-bold text-slate-800 mb-2">2. Breathe</h3>
+                    <p class="text-slate-500 text-sm">Respiration: Taking in oxygen to release energy.</p>
+                </div>
+
+                <!-- 3. Move -->
+                <div class="card-hover bg-white p-6 rounded-2xl border border-slate-200 cursor-pointer group" onclick="showDetail('move')">
+                    <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-2xl mb-4 group-hover:bg-emerald-200 transition-colors">🏃</div>
+                    <h3 class="text-lg font-bold text-slate-800 mb-2">3. Move</h3>
+                    <p class="text-slate-500 text-sm">Can move by themselves. Even plants move!</p>
+                </div>
+
+                <!-- 4. Grow -->
+                <div class="card-hover bg-white p-6 rounded-2xl border border-slate-200 cursor-pointer group" onclick="showDetail('grow')">
+                    <div class="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-2xl mb-4 group-hover:bg-green-200 transition-colors">🌱</div>
+                    <h3 class="text-lg font-bold text-slate-800 mb-2">4. Grow</h3>
+                    <p class="text-slate-500 text-sm">Increase in size and complexity over time.</p>
+                </div>
+
+                <!-- 5. Excrete -->
+                <div class="card-hover bg-white p-6 rounded-2xl border border-slate-200 cursor-pointer group" onclick="showDetail('excrete')">
+                    <div class="w-12 h-12 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center text-2xl mb-4 group-hover:bg-yellow-200 transition-colors">🚽</div>
+                    <h3 class="text-lg font-bold text-slate-800 mb-2">5. Excrete Waste</h3>
+                    <p class="text-slate-500 text-sm">Removal of waste produced by the body.</p>
+                </div>
+
+                <!-- 6. Reproduce -->
+                <div class="card-hover bg-white p-6 rounded-2xl border border-slate-200 cursor-pointer group" onclick="showDetail('reproduce')">
+                    <div class="w-12 h-12 bg-pink-100 text-pink-600 rounded-full flex items-center justify-center text-2xl mb-4 group-hover:bg-pink-200 transition-colors">👶</div>
+                    <h3 class="text-lg font-bold text-slate-800 mb-2">6. Reproduce</h3>
+                    <p class="text-slate-500 text-sm">Producing offspring to continue the species.</p>
+                </div>
+
+                <!-- 7. Sense -->
+                <div class="card-hover bg-white p-6 rounded-2xl border border-slate-200 cursor-pointer group md:col-span-2 lg:col-span-3 lg:w-1/2 lg:mx-auto" onclick="showDetail('sense')">
+                    <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-2xl mb-4 group-hover:bg-purple-200 transition-colors">👀</div>
+                    <h3 class="text-lg font-bold text-slate-800 mb-2">7. Sense (React)</h3>
+                    <p class="text-slate-500 text-sm">Detect and respond to changes in the environment.</p>
+                </div>
+            </div>
+
+            <!-- Detail Modal (Hidden) -->
+            <div id="detail-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4" onclick="closeDetail()">
+                <div class="bg-white rounded-2xl p-8 max-w-md w-full relative" onclick="event.stopPropagation()">
+                    <button class="absolute top-4 right-4 text-slate-400 hover:text-slate-600" onclick="closeDetail()">✕</button>
+                    <div id="modal-icon" class="text-4xl mb-4"></div>
+                    <h3 id="modal-title" class="text-2xl font-bold text-slate-900 mb-2">Title</h3>
+                    <p id="modal-desc" class="text-slate-600 leading-relaxed">Description</p>
+                    
+                    <!-- Special Plant Note (Hidden by default) -->
+                    <div id="modal-plant-note" class="hidden mt-4 bg-emerald-50 p-4 rounded-xl border border-emerald-100">
+                        <h4 class="text-sm font-bold text-emerald-800 mb-1">Can Plants Move?</h4>
+                        <p class="text-xs text-emerald-700">Yes! Plants move slowly. For example, they turn their leaves and stems towards the light (Phototropism).</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: QUIZ -->
+        <div id="view-quiz" class="hidden fade-in max-w-3xl mx-auto">
+            <div class="text-center mb-8">
+                <h2 class="text-2xl font-bold text-rose-900">Is it Living or Non-Living?</h2>
+                <p class="text-slate-500">Test your knowledge! Remember, living things must do ALL 7 functions.</p>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+                <div id="quiz-container">
+                    <div class="flex justify-between items-center mb-6">
+                        <span id="quiz-progress" class="text-xs font-bold uppercase text-slate-400 tracking-wider">Question 1/5</span>
+                        <div class="flex gap-1" id="quiz-dots">
+                            <!-- Dots injected here -->
+                        </div>
+                    </div>
+
+                    <div class="text-center py-8">
+                        <div id="quiz-img" class="text-6xl mb-6">🤖</div>
+                        <h3 id="quiz-q" class="text-2xl font-bold text-slate-800 mb-4">Robot</h3>
+                        <div class="flex gap-4 justify-center mt-8">
+                            <button onclick="answer(true)" class="px-8 py-3 bg-rose-50 text-rose-700 font-bold rounded-xl border-2 border-rose-100 hover:bg-rose-100 transition-all">Living</button>
+                            <button onclick="answer(false)" class="px-8 py-3 bg-slate-100 text-slate-700 font-bold rounded-xl border-2 border-slate-200 hover:bg-slate-200 transition-all">Non-Living</button>
+                        </div>
+                    </div>
+                    
+                    <div id="quiz-feedback" class="hidden mt-4 text-center p-4 rounded-xl bg-slate-50">
+                        <p id="feedback-text" class="font-bold"></p>
+                        <button onclick="nextQuestion()" class="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 text-sm">Next Question</button>
+                    </div>
+                </div>
+
+                <div id="quiz-end" class="hidden text-center py-12">
+                    <div class="text-6xl mb-4">🎉</div>
+                    <h3 class="text-2xl font-bold text-slate-800 mb-2">Quiz Complete!</h3>
+                    <p class="text-slate-500 mb-6">You're a biology expert.</p>
+                    <button onclick="restartQuiz()" class="px-6 py-3 bg-rose-600 text-white font-bold rounded-xl hover:bg-rose-700 transition-all">Try Again</button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // --- DATA ---
+        const functionsData = {
+            food: { icon: "🍔", title: "Need Food", desc: "Living things cannot survive without energy. Food provides the energy needed for all other life processes." },
+            breathe: { icon: "💨", title: "Breathe (Respiration)", desc: "Living things take in oxygen from the air (or water) to release energy from food." },
+            move: { icon: "🏃", title: "Move", desc: "Animals move to find food or escape danger. Plants move too, but slowly (e.g., opening flowers)." },
+            grow: { icon: "🌱", title: "Grow", desc: "Living things increase in size. A baby grows into an adult; a seed grows into a tree." },
+            excrete: { icon: "🚽", title: "Excrete Waste", desc: "The body produces waste (like sweat, urine, CO2) that must be removed to stay healthy." },
+            reproduce: { icon: "👶", title: "Reproduce", desc: "Living things produce offspring (babies/seeds) so their species doesn't disappear." },
+            sense: { icon: "👀", title: "Sense (React)", desc: "Living things detect changes (heat, light, sound) and react to them for survival." }
+        };
+
+        const quizQuestions = [
+            { icon: "🤖", name: "Robot", isLiving: false, reason: "It moves and 'speaks', but it doesn't grow, breathe, or reproduce naturally." },
+            { icon: "🌵", name: "Cactus", isLiving: true, reason: "It grows, needs water, reproduces, and reacts to sunlight!" },
+            { icon: "💎", name: "Crystal", isLiving: false, reason: "Crystals can 'grow' in size, but they don't eat, breathe, or reproduce." },
+            { icon: "🐛", name: "Worm", isLiving: true, reason: "It performs all 7 vital functions, including breathing through its skin." },
+            { icon: "🚗", name: "Car", isLiving: false, reason: "It moves and releases waste (exhaust), but it doesn't grow or reproduce itself." }
+        ];
+
+        // --- STATE ---
+        let currentQIndex = 0;
+
+        // --- FUNCTIONS ---
+
+        function setTab(tab) {
+            document.getElementById('view-functions').classList.add('hidden');
+            document.getElementById('view-quiz').classList.add('hidden');
+            document.getElementById(`view-${tab}`).classList.remove('hidden');
+
+            const btnFunc = document.getElementById('tab-functions');
+            const btnQuiz = document.getElementById('tab-quiz');
+
+            if (tab === 'functions') {
+                btnFunc.className = "whitespace-nowrap flex-1 md:flex-none px-6 py-2 rounded-md text-sm font-bold transition-all bg-white text-rose-600 shadow-sm";
+                btnQuiz.className = "whitespace-nowrap flex-1 md:flex-none px-6 py-2 rounded-md text-sm font-bold transition-all text-slate-500 hover:text-slate-700";
+            } else {
+                btnQuiz.className = "whitespace-nowrap flex-1 md:flex-none px-6 py-2 rounded-md text-sm font-bold transition-all bg-white text-rose-600 shadow-sm";
+                btnFunc.className = "whitespace-nowrap flex-1 md:flex-none px-6 py-2 rounded-md text-sm font-bold transition-all text-slate-500 hover:text-slate-700";
+                restartQuiz(); // Reset quiz when tab opens
+            }
+        }
+
+        function showDetail(key) {
+            const data = functionsData[key];
+            const modal = document.getElementById('detail-modal');
+            const plantNote = document.getElementById('modal-plant-note');
+            
+            document.getElementById('modal-icon').innerText = data.icon;
+            document.getElementById('modal-title').innerText = data.title;
+            document.getElementById('modal-desc').innerText = data.desc;
+            
+            // Special logic for "Move"
+            if (key === 'move') {
+                plantNote.classList.remove('hidden');
+            } else {
+                plantNote.classList.add('hidden');
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeDetail() {
+            document.getElementById('detail-modal').classList.add('hidden');
+        }
+
+        // --- QUIZ LOGIC ---
+
+        function restartQuiz() {
+            currentQIndex = 0;
+            document.getElementById('quiz-end').classList.add('hidden');
+            document.getElementById('quiz-container').classList.remove('hidden');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            const q = quizQuestions[currentQIndex];
+            document.getElementById('quiz-img').innerText = q.icon;
+            document.getElementById('quiz-q').innerText = q.name;
+            document.getElementById('quiz-progress').innerText = `Question ${currentQIndex + 1}/${quizQuestions.length}`;
+            
+            document.getElementById('quiz-feedback').classList.add('hidden');
+            
+            // Dots
+            const dotsContainer = document.getElementById('quiz-dots');
+            dotsContainer.innerHTML = '';
+            quizQuestions.forEach((_, i) => {
+                const dot = document.createElement('div');
+                dot.className = `w-2 h-2 rounded-full ${i === currentQIndex ? 'bg-rose-500' : 'bg-slate-200'}`;
+                dotsContainer.appendChild(dot);
+            });
+        }
+
+        function answer(userSaysLiving) {
+            const q = quizQuestions[currentQIndex];
+            const isCorrect = userSaysLiving === q.isLiving;
+            const feedbackBox = document.getElementById('quiz-feedback');
+            const feedbackText = document.getElementById('feedback-text');
+
+            feedbackBox.classList.remove('hidden');
+            
+            if (isCorrect) {
+                feedbackBox.className = "mt-8 text-center p-4 rounded-xl bg-green-50 border border-green-100 correct-anim";
+                feedbackText.innerHTML = `<span class="text-green-700 text-lg">Correct!</span><br><span class="text-green-600 font-normal text-sm">${q.reason}</span>`;
+            } else {
+                feedbackBox.className = "mt-8 text-center p-4 rounded-xl bg-red-50 border border-red-100 wrong-anim";
+                feedbackText.innerHTML = `<span class="text-red-700 text-lg">Not quite!</span><br><span class="text-red-600 font-normal text-sm">${q.reason}</span>`;
+            }
+        }
+
+        function nextQuestion() {
+            currentQIndex++;
+            if (currentQIndex < quizQuestions.length) {
+                loadQuestion();
+            } else {
+                document.getElementById('quiz-container').classList.add('hidden');
+                document.getElementById('quiz-end').classList.remove('hidden');
+            }
+        }
+
+        // Init
+        setTab('functions');
+
+    </script>
+</body>
+</html>

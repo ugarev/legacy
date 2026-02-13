@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中文中一單元一</title>
+    <!-- Using the same styles as your quiz app -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
+
+        :root {
+            --primary-color: #4A90E2;
+            --secondary-color: #50E3C2;
+            --correct-color: #28a745;
+            --incorrect-color: #dc3545;
+            --warning-color: #db7B2b;
+            --bg-color: #f4f7f9;
+            --text-color: #333;
+            --white: #FFFFFF;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 900px; /* Kept the same max-width */
+            background-color: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            text-align: center;
+        }
+
+        #start-screen, #end-screen {
+            padding: 50px;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        #start-screen p {
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+        }
+
+        #start-button, .restart-button {
+            background-color: var(--primary-color);
+            color: var(--white);
+            border: none;
+            padding: 15px 35px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        #start-button:hover, .restart-button:hover {
+            background-color: #357ABD;
+            transform: translateY(-2px);
+        }
+        
+        /* This is the main study screen */
+        #flashcard-screen {
+            display: none;
+        }
+
+        #header {
+            padding: 20px 30px;
+            background-color: var(--primary-color);
+            color: var(--white);
+            display: flex;
+            justify-content: center; /* Centered the counter */
+            align-items: center;
+            position: relative;
+        }
+
+        #header div {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+        
+        /* Container for the card and buttons */
+        #card-container {
+            padding: 30px 40px;
+        }
+
+        /* --- Flashcard Styles --- */
+        #flashcard-wrapper {
+            /* Sets up the 3D space for the flip */
+            perspective: 1000px;
+            min-height: 300px;
+            margin-bottom: 25px;
+        }
+
+        #flashcard {
+            position: relative;
+            width: 100%;
+            height: 300px;
+            /* Handles the 3D flip */
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+            cursor: pointer;
+        }
+
+        /* State when flipped */
+        #flashcard.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        /* Front and Back common styles */
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            /* Hides the back-face during flip */
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.07);
+        }
+
+        #card-front {
+            background-color: var(--white);
+            border: 2px solid var(--primary-color);
+            color: var(--text-color);
+            font-size: 1.8rem;
+            font-weight: 700;
+            line-height: 1.5;
+        }
+
+        #card-back {
+            background-color: #eef5ff; /* Light blue, from your timer */
+            border: 2px solid var(--primary-color);
+            color: var(--text-color);
+            /* Positioned on the back */
+            transform: rotateY(180deg);
+            font-size: 1.4rem;
+            line-height: 1.6;
+        }
+        /* --- End Flashcard Styles --- */
+
+
+        /* Navigation buttons */
+        #nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+        
+        /* Flip button, styled like 'Next' from quiz */
+        #flip-button {
+            background-color: var(--primary-color);
+            color: var(--white);
+            border: none;
+            padding: 15px 35px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        #flip-button:hover {
+            background-color: #357ABD;
+            transform: translateY(-2px);
+        }
+        
+        /* Prev/Next buttons, styled like 'Next' from quiz */
+        #prev-button, #next-button {
+            background-color: var(--secondary-color);
+            color: var(--white);
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        
+        #prev-button:hover, #next-button:hover {
+            background-color: #40B89F;
+            transform: translateY(-2px);
+        }
+
+        #prev-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #end-screen {
+            display: none;
+        }
+
+        #final-score { /* Renamed for clarity, but same ID */
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            font-weight: 700;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+
+        <div id="start-screen">
+            <h1>中文中一單元一</h1>
+            <h2>Flashcards</h2>
+            <p>Click the card to flip it. Use the buttons to navigate.</p>
+            <button id="start-button">Start Studying</button>
+        </div>
+
+        <div id="flashcard-screen">
+            <div id="header">
+                <div id="card-counter">Card 1 / 10</div>
+            </div>
+            <div id="card-container">
+                
+                <!-- This wrapper holds the card -->
+                <div id="flashcard-wrapper">
+                    <div id="flashcard">
+                        <div id="card-front" class="card-face">
+                            <!-- Front content goes here -->
+                        </div>
+                        <div id="card-back" class="card-face">
+                            <!-- Back content goes here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Main 'Flip' button -->
+                <button id="flip-button">Flip Card</button>
+
+                <!-- Prev/Next navigation -->
+                <div id="nav-buttons">
+                    <button id="prev-button">Previous</button>
+                    <button id="next-button">Next</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="end-screen">
+            <h1>Study session done!</h1>
+            <div id="final-score">You've completed all the cards!</div>
+            <p>Practice makes perfect, keep revising!</p>
+            <button class="restart-button">Study Again</button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- MODULAR FLASHCARD DATA ---
+        // Just edit this array to change the flashcards
+        const allFlashcards = [
+    // --- Category 1: Key Skills (核心技能) ---
+    {
+        front: "什麼是「倒敘法」？",
+        back: "先寫出事情的結局或某個突出情節，然後再按事情發生順序敘述。"
+    },
+    {
+        front: "什麼是「順敘法」？",
+        back: "按照事情發生的先後次序來敘述。"
+    },
+    {
+        front: "人物的「直接描寫」包含哪四種？",
+        back: "肖像 (外貌) 描寫、語言 (說話) 描寫、行動 (動作) 描寫、心理描寫。"
+    },
+    {
+        front: "什麼是「間接描寫」(或側面描寫)？",
+        back: "通過描寫其他事物（如他人反應、環境）來襯托主要人物。 (例如：對比、烘托)"
+    },
+    {
+        front: "什麼是「借喻」？(修辭)",
+        back: "只出現「喻體」，「本體」和「喻詞」不出現。 (例：「這隻老狐狸」)"
+    },
+    {
+        front: "什麼是「借代」？(修辭)",
+        back: "不直說本體，借用與本體有密切關係的事物代替。(例：「烽煙」代「戰爭」)"
+    },
+    {
+        front: "「的」、「地」、「得」的用法有何不同？",
+        back: "「的」+ 名詞 (e.g., 美麗的老師)；「地」+ 動詞 (e.g., 飛快地跑)；「得」+ 形容詞 (e.g., 跑得快)"
+    },
+    {
+        front: "冒號 (：) 的其中一個主要用途是什麼？",
+        back: "用於提示下文，例如引出某人的說話或解釋說明。"
+    },
+
+    // --- Category 2: Modern Chinese Texts (白話文篇章) ---
+    {
+        front: "《我的老師》(蘇叔陽) 的主旨是什麼？",
+        back: "透過回憶劉老師平日教學的言行，抒發對老師的思念、尊敬和感激之情。"
+    },
+    {
+        front: "《我的老師》(蘇叔陽)：劉老師怎樣形容自己的殘障？",
+        back: "他開玩笑說是「女媧甩掉了一條腿的」，表現出他的積極樂觀。"
+    },
+    {
+        front: "《我的老師》(蘇叔陽)：劉老師講民族英雄時「慷慨陳詞」，講近代史時「哽咽」，這表現了他什麼形象？",
+        back: "富有愛國情懷。"
+    },
+    {
+        front: "《我的老師》(蘇叔陽)：劉老師用「撐」、「騰」等動作寫板書，這屬於什麼描寫？",
+        back: "行動描寫，突顯他教學熱誠、敬業。"
+    },
+    {
+        front: "《我的老師》(賈平凹) 的主旨是什麼？",
+        back: "藉小孩孫涵泊的美好品質 (善良、率真、正義)，反思成年人世界的虛偽、麻木和怯懦。"
+    },
+    {
+        front: "《我的老師》(賈平凹)：孫涵泊問「花疼不疼？」突顯他什麼品質？",
+        back: "善良、愛惜生命。"
+    },
+    {
+        front: "《我的老師》(賈平凹)：作者用「我」的怯懦來突顯孫涵泊的勇敢，這是什麼手法？",
+        back: "對比 / 襯托 (間接描寫)。"
+    },
+
+    // --- Category 3: Classical Chinese (文言文篇章) ---
+    {
+        front: "《林琴南敬師》：「炊不得米」的「炊」是什麼意思？",
+        back: "煮飯。"
+    },
+    {
+        front: "《林琴南敬師》：「以襪實米」的「實」是什麼意思？",
+        back: "裝滿 (動詞)。"
+    },
+    {
+        front: "《林琴南敬師》：「謂其竊」的「謂」和「竊」是什麼意思？",
+        back: "「謂」：認為 / 說； 「竊」：偷竊。"
+    },
+    {
+        front: "《林琴南敬師》：「拒不納」的「納」是什麼意思？",
+        back: "接受、收下。"
+    },
+    {
+        front: "《林琴南敬師》：「母告之故」的「故」是什麼意思？",
+        back: "緣故、原因。"
+    },
+    {
+        front: "《林琴南敬師》：老師一開始為何「怒」而「拒不納」？",
+        back: "他以為米是林琴南偷來的，反映他品格高尚，「非禮不受」。"
+    },
+    {
+        front: "《程門立雪》：「頤偶瞑坐」的「偶」和「瞑坐」是什麼意思？",
+        back: "「偶」：剛好； 「瞑坐」：閉目而坐 (睡著了)。"
+    },
+    {
+        front: "《程門立雪》：「頤既覺」的「既」和「覺」是什麼意思？",
+        back: "「既」：已經； 「覺」：醒來。"
+    },
+    {
+        front: "《程門立雪》：「立雪盈尺」的「盈」是什麼意思？",
+        back: "滿。"
+    },
+    {
+        front: "《程門立雪》：「調官不赴」的「赴」是什麼意思？ (試卷題)",
+        back: "赴任、前往。"
+    },
+    {
+        front: "語譯《程門立雪》：「頤既覺，則門外雪深一尺矣。」",
+        back: "程頤醒來時，(才發現)門外的雪已經積了一尺深了。"
+    },
+    {
+        front: "《程門立雪》：開首寫楊時「調官不赴」有何作用？ (試卷題)",
+        back: "鋪墊。突出楊時「不慕名利」、「真心向學」的形象。"
+    },
+
+    // --- Category 4: Specified Idioms (指定成語) ---
+    {
+        front: "成語「循循善誘」是什麼意思？",
+        back: "善於有步驟地引導別人學習。"
+    },
+    {
+        front: "成語「恪盡職守」是什麼意思？",
+        back: "謹慎、恭敬地做好自己的職務。"
+    },
+    {
+        front: "成語「步履蹣跚」是什麼意思？",
+        back: "形容走路一拐一拐，非常困難的樣子。"
+    },
+    {
+        front: "成語「不苟言笑」是什麼意思？",
+        back: "形容態度嚴肅，不隨便說笑。"
+    },
+    {
+        front: "成語「茅塞頓開」是什麼意思？",
+        back: "形容思路突然開闊，立刻明白道理。"
+    },
+    {
+        front: "成語「有教無類」是什麼意思？",
+        back: "指施教的對象不分貴賤賢愚，一視同仁。"
+    },
+    {
+        front: "成語「鞠躬盡瘁」是什麼意思？",
+        back: "指恭敬謹慎，不辭勞苦地服務。"
+    },
+    {
+        front: "成語「嘔心瀝血」是什麼意思？",
+        back: "比喻費盡心思，用盡心血。"
+    },
+    {
+        front: "成語「潤物無聲」是什麼意思？",
+        back: "比喻(好事)在不知不覺中產生影響。"
+    },
+    {
+        front: "成語「金玉良言」是什麼意思？",
+        back: "形容非常寶貴、有益的勸告。"
+    },
+
+    // --- Category 5: Specified Correct Characters (指定錯別字) ---
+    {
+        front: "填字：嚴 ( )",
+        back: "嚴謹"
+    },
+    {
+        front: "填字：( ) 嗇",
+        back: "吝嗇"
+    },
+    {
+        front: "填字：教 ( )",
+        back: "教誨"
+    },
+    {
+        front: "填字：( ) 礙",
+        back: "妨礙"
+    },
+    {
+        front: "填字：( ) 口 (jiè kǒu)",
+        back: "藉口"
+    },
+    {
+        front: "填字：( ) 躍",
+        back: "踴躍"
+    },
+    {
+        front: "填字：( ) 撼",
+        back: "震撼"
+    },
+    {
+        front: "填字：( ) 促",
+        back: "催促"
+    },
+    {
+        front: "填字：( ) 懼",
+        back: "恐懼"
+    },
+    {
+        front: "填字：( ) 張",
+        back: "慌張"
+    },
+    {
+        front: "填字：鬆 ( )",
+        back: "鬆弛"
+    },
+    {
+        front: "填字：( ) 惜",
+        back: "惋惜"
+    },
+    {
+        front: "填字：關 ( )",
+        back: "關鍵"
+    }
+];
+        // -------------------------------
+
+        
+        // DOM Elements
+        const startScreen = document.getElementById('start-screen');
+        const flashcardScreen = document.getElementById('flashcard-screen');
+        const endScreen = document.getElementById('end-screen');
+        const startButton = document.getElementById('start-button');
+        const restartButtons = document.querySelectorAll('.restart-button');
+        
+        const cardCounter = document.getElementById('card-counter');
+        const flashcardWrapper = document.getElementById('flashcard-wrapper');
+        const flashcard = document.getElementById('flashcard');
+        const cardFront = document.getElementById('card-front');
+        const cardBack = document.getElementById('card-back');
+        
+        const flipButton = document.getElementById('flip-button');
+        const prevButton = document.getElementById('prev-button');
+        const nextButton = document.getElementById('next-button');
+        
+        const finalScore = document.getElementById('final-score');
+
+        // Game Variables
+        let currentDeck = [];
+        let currentCardIndex = 0;
+        let isFlipped = false;
+
+        // Shuffle function (same as your quiz)
+        function shuffleArray(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex != 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        function startGame() {
+            // Shuffle the deck for this session
+            currentDeck = shuffleArray([...allFlashcards]);
+            currentCardIndex = 0;
+            
+            startScreen.style.display = 'none';
+            endScreen.style.display = 'none';
+            flashcardScreen.style.display = 'block';
+            
+            showCard();
+        }
+
+        function showCard() {
+            // Get the current card data
+            const card = currentDeck[currentCardIndex];
+            
+            // Populate the text
+            cardFront.textContent = card.front;
+            cardBack.textContent = card.back;
+            
+            // Update counter
+            cardCounter.textContent = `Card ${currentCardIndex + 1} / ${currentDeck.length}`;
+            
+            // Reset flip state
+            flashcard.classList.remove('is-flipped');
+            isFlipped = false;
+            
+            // Update button states
+            prevButton.disabled = (currentCardIndex === 0);
+            
+            if (currentCardIndex === currentDeck.length - 1) {
+                nextButton.textContent = "Finish";
+            } else {
+                nextButton.textContent = "Next";
+            }
+        }
+        
+        function flipCard() {
+            flashcard.classList.toggle('is-flipped');
+            isFlipped = !isFlipped;
+        }
+
+        function nextCard() {
+            if (currentCardIndex < currentDeck.length - 1) {
+                currentCardIndex++;
+                showCard();
+            } else {
+                // On the last card, "Next" becomes "Finish"
+                showEndScreen();
+            }
+        }
+
+        function prevCard() {
+            if (currentCardIndex > 0) {
+                currentCardIndex--;
+                showCard();
+            }
+        }
+
+        function showEndScreen() {
+            flashcardScreen.style.display = 'none';
+            endScreen.style.display = 'block';
+        }
+
+        // --- Event Listeners ---
+        startButton.addEventListener('click', startGame);
+        
+        // Flip the card by clicking the card itself OR the flip button
+        flashcardWrapper.addEventListener('click', flipCard);
+        flipButton.addEventListener('click', flipCard);
+        
+        nextButton.addEventListener('click', nextCard);
+        prevButton.addEventListener('click', prevCard);
+        
+        restartButtons.forEach(button => button.addEventListener('click', startGame));
+        
+    </script>
+</body>
+</html>
